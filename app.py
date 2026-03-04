@@ -167,8 +167,8 @@ def save_race_scores_csv():
 # Streamlit UI
 # -------------------------
 st.title("F1 Race Predictions Tracker")
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["Enter Predictions", "Enter Results", "Race Breakdown", "Season Leaderboard"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Enter Predictions", "Enter Results", "Race Breakdown", "Season Leaderboard", "Drivers' Championship"]
 )
 
 # -------------------------
@@ -219,7 +219,6 @@ with tab2:
     st.session_state.results[race_name_results] = selections
 
     if st.button("Submit Results"):
-        # remove old points if race already scored
         if race_name_results in st.session_state.race_scores:
             old_scores = st.session_state.race_scores[race_name_results]
             for player, pts in old_scores.items():
@@ -244,9 +243,7 @@ with tab2:
 # -------------------------
 with tab3:
     st.header("Race Breakdown")
-    race_name_breakdown = st.selectbox(
-        "Select Race", list(RACES.keys()), key="select_race_breakdown"
-    )
+    race_name_breakdown = st.selectbox("Select Race", list(RACES.keys()), key="select_race_breakdown")
 
     if race_name_breakdown in st.session_state.results:
         results = st.session_state.results[race_name_breakdown]
@@ -301,6 +298,48 @@ with tab4:
             for player in PLAYERS:
                 last_points = progression_data[player][-1] if progression_data[player] else 0
                 progression_data[player].append(last_points + st.session_state.race_scores[race].get(player, 0))
+        st.line_chart(pd.DataFrame(progression_data, index=races_done))
+    else:
+        st.info("No races completed yet to show progression.")
+
+# -------------------------
+# Tab 5: Drivers' Championship
+# -------------------------
+with tab5:
+    st.header("Drivers' Championship Standings")
+
+    F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+    driver_totals = {driver: 0 for driver in DRIVERS}
+
+    for race, results in st.session_state.results.items():
+        for pos, driver in enumerate(results):
+            if driver in driver_totals:
+                driver_totals[driver] += F1_POINTS[pos] if pos < 10 else 0
+
+    df_drivers_champ = pd.DataFrame({
+        "Driver": list(driver_totals.keys()),
+        "Points": list(driver_totals.values())
+    }).sort_values(by="Points", ascending=False).reset_index(drop=True)
+
+    # Set index as P1, P2, P3 …
+    df_drivers_champ.index = [f"P{i+1}" for i in range(len(df_drivers_champ))]
+
+    st.table(df_drivers_champ)
+
+    st.subheader("Drivers' Points Progression Over Season")
+    races_done = [race for race in RACES.keys() if race in st.session_state.results]
+    if races_done:
+        progression_data = {driver: [] for driver in DRIVERS}
+        for race in races_done:
+            for driver in DRIVERS:
+                last_points = progression_data[driver][-1] if progression_data[driver] else 0
+                results = st.session_state.results[race]
+                if driver in results:
+                    pos = results.index(driver)
+                    points = F1_POINTS[pos] if pos < 10 else 0
+                else:
+                    points = 0
+                progression_data[driver].append(last_points + points)
         st.line_chart(pd.DataFrame(progression_data, index=races_done))
     else:
         st.info("No races completed yet to show progression.")
