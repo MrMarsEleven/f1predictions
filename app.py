@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # -------------------------
 # Drivers and Races
@@ -55,7 +56,41 @@ if 'race_scores' not in st.session_state:
     st.session_state.race_scores = {}
 
 # -------------------------
-# Scoring function (partial submissions supported)
+# Load saved CSVs if they exist
+# -------------------------
+if os.path.exists("predictions.csv"):
+    df = pd.read_csv("predictions.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        player = row["Player"]
+        preds = [row[f"P{i+1}"] for i in range(22)]
+        if race not in st.session_state.predictions:
+            st.session_state.predictions[race] = {}
+        st.session_state.predictions[race][player] = preds
+
+if os.path.exists("results.csv"):
+    df = pd.read_csv("results.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        results = [row[f"P{i+1}"] for i in range(22)]
+        st.session_state.results[race] = results
+
+if os.path.exists("race_scores.csv"):
+    df = pd.read_csv("race_scores.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        scores = {player: row[player] for player in PLAYERS}
+        st.session_state.race_scores[race] = scores
+
+# Recalculate season totals
+for player in PLAYERS:
+    st.session_state.season_totals[player] = sum(
+        st.session_state.race_scores[race].get(player, 0)
+        for race in st.session_state.race_scores
+    )
+
+# -------------------------
+# Scoring function
 # -------------------------
 def calculate_scores(predictions, results):
     score = 0
@@ -66,7 +101,7 @@ def calculate_scores(predictions, results):
         if driver == results[i]:
             score += 3
             if i == 0:
-                score += 3  # bonus for exact winner
+                score += 3
         elif driver in podium and i < 3:
             score += 1
     return score
@@ -161,7 +196,7 @@ with tab2:
     st.session_state.results[race_name_results] = selections
 
     if st.button("Submit Results"):
-        # remove old points if race already scored
+        # Remove old points if race already scored
         if race_name_results in st.session_state.race_scores:
             old_scores = st.session_state.race_scores[race_name_results]
             for player, pts in old_scores.items():
@@ -194,7 +229,6 @@ with tab3:
         results = st.session_state.results[race_name_breakdown]
 
         st.subheader("Official Results")
-        # First column = P1-P22, second column = Driver, no extra index
         df_results = pd.DataFrame({
             "Position": [f"P{i+1}" for i in range(22)],
             "Driver": results
@@ -230,7 +264,6 @@ with tab4:
     leaderboard = sorted(
         st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
     )
-    # Show Player as row, only points column
     st.dataframe(pd.DataFrame(
         {player: points for player, points in leaderboard}, index=[0]
     ).T.rename(columns={0:"Points"}), use_container_width=True)
