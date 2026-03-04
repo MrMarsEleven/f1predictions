@@ -101,7 +101,7 @@ def calculate_scores(predictions, results):
         if driver == results[i]:
             score += 3
             if i == 0:
-                score += 3
+                score += 3  # bonus for exact winner
         elif driver in podium and i < 3:
             score += 1
     return score
@@ -170,10 +170,7 @@ with tab1:
             )
 
         st.session_state.predictions[race_name][player] = selections
-
-        if st.button(f"Submit {player}'s Predictions", key=f"submit_{race_name}_{player}"):
-            st.success(f"{player}'s predictions submitted!")
-            save_predictions_csv()
+        save_predictions_csv()  # auto-save immediately
 
 # -------------------------
 # Tab 2: Enter Results
@@ -210,11 +207,13 @@ with tab2:
             st.session_state.season_totals[player] += points
 
         st.session_state.race_scores[race_name_results] = race_points
-        st.success("Results submitted successfully!")
 
+        # Save everything immediately
         save_results_csv()
         save_season_totals_csv()
         save_race_scores_csv()
+
+        st.success("Results submitted successfully!")
 
 # -------------------------
 # Tab 3: Race Breakdown
@@ -264,9 +263,8 @@ with tab4:
     leaderboard = sorted(
         st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
     )
-    st.dataframe(pd.DataFrame(
-        {player: points for player, points in leaderboard}, index=[0]
-    ).T.rename(columns={0:"Points"}), use_container_width=True)
+    df_leaderboard = pd.DataFrame(leaderboard, columns=["Player", "Points"]).set_index("Player")
+    st.dataframe(df_leaderboard, use_container_width=True)
 
     st.subheader("Points Progression Over Season")
     races_done = [race for race in RACES.keys() if race in st.session_state.race_scores]
