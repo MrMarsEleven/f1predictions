@@ -14,32 +14,33 @@ DRIVERS = [
     "Valtteri Bottas", "Sergio Pérez"
 ]
 
-RACES = [
-    "Australian GP | Formula 1 Qatar Airways Australian Grand Prix",
-    "Chinese GP | Formula 1 Heineken Chinese Grand Prix",
-    "Japanese GP | Formula 1 Aramco Japanese Grand Prix",
-    "Bahrain GP | Formula 1 Gulf Air Bahrain Grand Prix",
-    "Saudi Arabian GP | Formula 1 STC Saudi Arabian Grand Prix",
-    "Miami GP | Formula 1 Crypto.com Miami Grand Prix",
-    "Canadian GP | Formula 1 Lenovo Grand Prix du Canada",
-    "Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco",
-    "Barcelona GP | Formula 1 MSC Cruises Gran Premio de Barcelona-Catalunya",
-    "Austrian GP | Formula 1 Lenovo Austrian Grand Prix",
-    "British GP | Formula 1 Pirelli British Grand Prix",
-    "Belgian GP | Formula 1 Rolex Belgian Grand Prix",
-    "Hungarian GP | Formula 1 AWS Hungarian Grand Prix",
-    "Dutch GP | Formula 1 Heineken Dutch Grand Prix",
-    "Italian GP | Formula 1 Pirelli Gran Premio d’Italia",
-    "Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid)",
-    "Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix",
-    "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix",
-    "United States GP | Formula 1 MSC Cruises United States Grand Prix",
-    "Mexico City GP | Formula 1 Gran Premio de la Ciudad de México",
-    "São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo",
-    "Las Vegas GP | Formula 1 Heineken Las Vegas Grand Prix",
-    "Qatar GP | Formula 1 Qatar Airways Qatar Grand Prix",
-    "Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix"
-]
+# Format: "Simple Name | Official Name"
+RACES = {
+    "Australian GP | Formula 1 Qatar Airways Australian Grand Prix": "",
+    "Chinese GP | Formula 1 Heineken Chinese Grand Prix": "",
+    "Japanese GP | Formula 1 Aramco Japanese Grand Prix": "",
+    "Bahrain GP | Formula 1 Gulf Air Bahrain Grand Prix": "",
+    "Saudi Arabian GP | Formula 1 STC Saudi Arabian Grand Prix": "",
+    "Miami GP | Formula 1 Crypto.com Miami Grand Prix": "",
+    "Canadian GP | Formula 1 Lenovo Grand Prix du Canada": "",
+    "Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco": "",
+    "Barcelona GP | Formula 1 MSC Cruises Gran Premio de Barcelona-Catalunya": "",
+    "Austrian GP | Formula 1 Lenovo Austrian Grand Prix": "",
+    "British GP | Formula 1 Pirelli British Grand Prix": "",
+    "Belgian GP | Formula 1 Rolex Belgian Grand Prix": "",
+    "Hungarian GP | Formula 1 AWS Hungarian Grand Prix": "",
+    "Dutch GP | Formula 1 Heineken Dutch Grand Prix": "",
+    "Italian GP | Formula 1 Pirelli Gran Premio d’Italia": "",
+    "Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid)": "",
+    "Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix": "",
+    "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix": "",
+    "United States GP | Formula 1 MSC Cruises United States Grand Prix": "",
+    "Mexico City GP | Formula 1 Gran Premio de la Ciudad de México": "",
+    "São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo": "",
+    "Las Vegas GP | Formula 1 Heineken Las Vegas Grand Prix": "",
+    "Qatar GP | Formula 1 Qatar Airways Qatar Grand Prix": "",
+    "Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix": ""
+}
 
 PLAYERS = ["Player 1", "Player 2", "Player 3"]
 
@@ -50,6 +51,11 @@ PREDICTIONS_FILE = "predictions.csv"
 RESULTS_FILE = "results.csv"
 SEASON_TOTALS_FILE = "season_totals.csv"
 RACE_SCORES_FILE = "race_scores.csv"
+
+# -------------------------
+# F1 official points
+# -------------------------
+F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 
 # -------------------------
 # Helper functions to load CSVs
@@ -113,7 +119,7 @@ if 'race_scores' not in st.session_state:
     st.session_state.race_scores = load_race_scores()
 
 # -------------------------
-# Scoring function (partial submissions supported)
+# Scoring function
 # -------------------------
 def calculate_scores(predictions, results):
     score = 0
@@ -124,7 +130,7 @@ def calculate_scores(predictions, results):
         if driver == results[i]:
             score += 3
             if i == 0:
-                score += 3  # bonus for exact winner
+                score += 3
         elif driver in podium and i < 3:
             score += 1
     return score
@@ -164,6 +170,17 @@ def save_race_scores_csv():
     pd.DataFrame(rows).to_csv(RACE_SCORES_FILE, index=False)
 
 # -------------------------
+# Get championship order
+# -------------------------
+def get_championship_order():
+    driver_totals = {driver: 0 for driver in DRIVERS}
+    for race, results in st.session_state.results.items():
+        for pos, driver in enumerate(results):
+            if driver in driver_totals:
+                driver_totals[driver] += F1_POINTS[pos] if pos < 10 else 0
+    return sorted(DRIVERS, key=lambda d: driver_totals[d], reverse=True)
+
+# -------------------------
 # Streamlit UI
 # -------------------------
 st.title("F1 Race Predictions Tracker")
@@ -176,7 +193,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 # -------------------------
 with tab1:
     st.header("Enter Predictions")
-    race_name = st.selectbox("Select Race", RACES, key="select_race_predictions")
+    race_name = st.selectbox("Select Race", list(RACES.keys()), key="select_race_predictions")
 
     for player in PLAYERS:
         st.subheader(player)
@@ -184,7 +201,8 @@ with tab1:
 
         for i in range(22):
             chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-            available_options = [""] + [d for d in DRIVERS if d not in chosen or d == selections[i]]
+            champ_order = get_championship_order()
+            available_options = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
             selections[i] = st.selectbox(
                 f"Position {i+1}",
                 options=available_options,
@@ -203,12 +221,13 @@ with tab1:
 # -------------------------
 with tab2:
     st.header("Enter Results")
-    race_name_results = st.selectbox("Select Race", RACES, key="select_race_results")
+    race_name_results = st.selectbox("Select Race", list(RACES.keys()), key="select_race_results")
     selections = st.session_state.results[race_name_results]
 
     for i in range(22):
         chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-        available_options = [""] + [d for d in DRIVERS if d not in chosen or d == selections[i]]
+        champ_order = get_championship_order()
+        available_options = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
         selections[i] = st.selectbox(
             f"Position {i+1}",
             options=available_options,
@@ -219,7 +238,6 @@ with tab2:
     st.session_state.results[race_name_results] = selections
 
     if st.button("Submit Results"):
-        # remove old points if race already scored
         if race_name_results in st.session_state.race_scores:
             old_scores = st.session_state.race_scores[race_name_results]
             for player, pts in old_scores.items():
@@ -245,7 +263,7 @@ with tab2:
 with tab3:
     st.header("Race Breakdown")
     race_name_breakdown = st.selectbox(
-        "Select Race", RACES, key="select_race_breakdown"
+        "Select Race", list(RACES.keys()), key="select_race_breakdown"
     )
 
     if race_name_breakdown in st.session_state.results:
@@ -294,7 +312,7 @@ with tab4:
     st.dataframe(df_leaderboard.set_index("Player"), use_container_width=True)
 
     st.subheader("Points Progression Over Season")
-    races_done = [race for race in RACES if race in st.session_state.race_scores]
+    races_done = [race for race in RACES.keys() if race in st.session_state.race_scores]
     if races_done:
         progression_data = {player: [] for player in PLAYERS}
         for race in races_done:
@@ -311,30 +329,22 @@ with tab4:
 with tab5:
     st.header("Drivers' Championship Standings")
 
-    # F1 official points
-    F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
-
     # Initialize totals
     driver_totals = {driver: 0 for driver in DRIVERS}
-
-    # Calculate points from each race
     for race, results in st.session_state.results.items():
         for pos, driver in enumerate(results):
             if driver in driver_totals:
                 driver_totals[driver] += F1_POINTS[pos] if pos < 10 else 0
 
-    # Convert to DataFrame with P1-P22 as index
     df_drivers_champ = pd.DataFrame({
-        "Position": [f"P{i+1}" for i in range(len(driver_totals))],
+        "Position": [f"P{i+1}" for i in range(len(DRIVERS))],
         "Driver": list(driver_totals.keys()),
         "Points": list(driver_totals.values())
-    }).sort_values(by="Points", ascending=False).set_index("Position")
+    }).sort_values(by="Points", ascending=False).reset_index(drop=True)
+    st.table(df_drivers_champ.set_index("Position"))
 
-    st.table(df_drivers_champ)
-
-    # Driver Points Progression Chart
     st.subheader("Drivers' Points Progression Over Season")
-    races_done = [race for race in RACES if race in st.session_state.results]
+    races_done = [race for race in RACES.keys() if race in st.session_state.results]
     if races_done:
         progression_data = {driver: [] for driver in DRIVERS}
         for race in races_done:
