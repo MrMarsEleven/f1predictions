@@ -15,12 +15,12 @@ DRIVERS = [
 ]
 
 RACES = {
-    "Australian GP | Albert Park": "Melbourne, Australia",
-    "Chinese GP | Shanghai Intl Circuit": "Shanghai, China",
-    "Japanese GP | Suzuka Intl Racing Course": "Suzuka, Japan",
-    "Bahrain GP | Bahrain Intl Circuit": "Sakhir, Bahrain",
+    "Australian GP | Albert Park Grand Prix Circuit": "Melbourne, Australia",
+    "Chinese GP | Shanghai International Circuit": "Shanghai, China",
+    "Japanese GP | Suzuka International Racing Course": "Suzuka, Japan",
+    "Bahrain GP | Bahrain International Circuit": "Sakhir, Bahrain",
     "Saudi Arabian GP | Jeddah Corniche Circuit": "Jeddah, Saudi Arabia",
-    "Miami GP | Miami Intl Autodrome": "Miami, USA",
+    "Miami GP | Miami International Autodrome": "Miami, USA",
     "Canadian GP | Circuit Gilles-Villeneuve": "Montreal, Canada",
     "Monaco GP | Circuit de Monaco": "Monte Carlo, Monaco",
     "Barcelona-Catalunya GP | Circuit de Barcelona-Catalunya": "Montmeló, Spain",
@@ -29,89 +29,79 @@ RACES = {
     "Belgian GP | Circuit de Spa-Francorchamps": "Stavelot, Belgium",
     "Hungarian GP | Hungaroring": "Mogyoród, Hungary",
     "Dutch GP | Circuit Zandvoort": "Zandvoort, Netherlands",
-    "Italian GP | Monza": "Monza, Italy",
-    "Spanish GP | Madrid Street Circuit": "Madrid, Spain",
+    "Italian GP | Autodromo Nazionale Monza": "Monza, Italy",
+    "Spanish GP | Madrid Street Circuit (IFEMA)": "Madrid, Spain",
     "Azerbaijan GP | Baku City Circuit": "Baku, Azerbaijan",
     "Singapore GP | Marina Bay Street Circuit": "Singapore",
     "United States GP | Circuit of the Americas": "Austin, USA",
     "Mexico City GP | Autódromo Hermanos Rodríguez": "Mexico City, Mexico",
-    "São Paulo GP | Interlagos": "São Paulo, Brazil",
+    "São Paulo GP | Autódromo José Carlos Pace (Interlagos)": "São Paulo, Brazil",
     "Las Vegas GP | Las Vegas Strip Circuit": "Las Vegas, USA",
-    "Qatar GP | Lusail Intl Circuit": "Lusail, Qatar",
+    "Qatar GP | Lusail International Circuit": "Lusail, Qatar",
     "Abu Dhabi GP | Yas Marina Circuit": "Abu Dhabi, UAE"
 }
 
 PLAYERS = ["Player 1", "Player 2", "Player 3"]
 
 # -------------------------
-# CSV Loading Helpers
-# -------------------------
-def load_predictions_csv():
-    if os.path.exists("predictions.csv"):
-        df = pd.read_csv("predictions.csv")
-        preds = {}
-        for race in RACES:
-            preds[race] = {}
-            for player in PLAYERS:
-                row = df[(df["Race"] == race) & (df["Player"] == player)]
-                if not row.empty:
-                    preds[race][player] = [row[f"P{i+1}"].values[0] if f"P{i+1}" in row else "" for i in range(22)]
-                else:
-                    preds[race][player] = [""]*22
-        return preds
-    else:
-        return {race: {p: [""]*22 for p in PLAYERS} for race in RACES}
-
-def load_results_csv():
-    if os.path.exists("results.csv"):
-        df = pd.read_csv("results.csv")
-        res = {}
-        for race in RACES:
-            row = df[df["Race"] == race]
-            if not row.empty:
-                res[race] = [row[f"P{i+1}"].values[0] if f"P{i+1}" in row else "" for i in range(22)]
-            else:
-                res[race] = [""]*22
-        return res
-    else:
-        return {race: [""]*22 for race in RACES}
-
-def load_season_totals_csv():
-    if os.path.exists("season_totals.csv"):
-        df = pd.read_csv("season_totals.csv")
-        totals = {row["Player"]: row["Points"] for idx, row in df.iterrows()}
-        for p in PLAYERS:
-            if p not in totals:
-                totals[p] = 0
-        return totals
-    else:
-        return {player: 0 for player in PLAYERS}
-
-def load_race_scores_csv():
-    if os.path.exists("race_scores.csv"):
-        df = pd.read_csv("race_scores.csv")
-        scores = {}
-        for idx, row in df.iterrows():
-            race = row["Race"]
-            scores[race] = {player: row[player] for player in PLAYERS if player in row}
-        return scores
-    else:
-        return {}
-
-# -------------------------
 # Session State Initialization
 # -------------------------
 if 'predictions' not in st.session_state:
-    st.session_state.predictions = load_predictions_csv()
+    st.session_state.predictions = {}
 if 'results' not in st.session_state:
-    st.session_state.results = load_results_csv()
-if 'season_totals' not in st.session_state:
-    st.session_state.season_totals = load_season_totals_csv()
+    st.session_state.results = {}
 if 'race_scores' not in st.session_state:
-    st.session_state.race_scores = load_race_scores_csv()
+    st.session_state.race_scores = {}
+if 'season_totals' not in st.session_state:
+    st.session_state.season_totals = {player:0 for player in PLAYERS}
 
 # -------------------------
-# Scoring Function
+# Load CSVs if they exist
+# -------------------------
+if os.path.exists("predictions.csv"):
+    df = pd.read_csv("predictions.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        player = row["Player"]
+        preds = [row[f"P{i+1}"] for i in range(22)]
+        if race not in st.session_state.predictions:
+            st.session_state.predictions[race] = {}
+        st.session_state.predictions[race][player] = preds
+
+if os.path.exists("results.csv"):
+    df = pd.read_csv("results.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        results = [row[f"P{i+1}"] for i in range(22)]
+        st.session_state.results[race] = results
+
+if os.path.exists("race_scores.csv"):
+    df = pd.read_csv("race_scores.csv")
+    for _, row in df.iterrows():
+        race = row["Race"]
+        scores = {player: row[player] for player in PLAYERS}
+        st.session_state.race_scores[race] = scores
+
+# Fill missing races with empty
+for race in RACES:
+    if race not in st.session_state.predictions:
+        st.session_state.predictions[race] = {p:[""]*22 for p in PLAYERS}
+    else:
+        for player in PLAYERS:
+            if player not in st.session_state.predictions[race]:
+                st.session_state.predictions[race][player] = [""]*22
+    if race not in st.session_state.results:
+        st.session_state.results[race] = [""]*22
+
+# Recalculate season totals
+for player in PLAYERS:
+    st.session_state.season_totals[player] = sum(
+        st.session_state.race_scores[race].get(player,0)
+        for race in st.session_state.race_scores
+    )
+
+# -------------------------
+# Scoring function
 # -------------------------
 def calculate_scores(predictions, results):
     score = 0
@@ -128,14 +118,14 @@ def calculate_scores(predictions, results):
     return score
 
 # -------------------------
-# CSV Saving Functions
+# CSV Save functions
 # -------------------------
 def save_predictions_csv():
     rows = []
     for race, race_preds in st.session_state.predictions.items():
         for player, preds in race_preds.items():
             row = {"Race": race, "Player": player}
-            row.update({f"P{i+1}": driver for i, driver in enumerate(preds)})
+            row.update({f"P{i+1}":driver for i,driver in enumerate(preds)})
             rows.append(row)
     pd.DataFrame(rows).to_csv("predictions.csv", index=False)
 
@@ -143,15 +133,9 @@ def save_results_csv():
     rows = []
     for race, results in st.session_state.results.items():
         row = {"Race": race}
-        row.update({f"P{i+1}": driver for i, driver in enumerate(results)})
+        row.update({f"P{i+1}":driver for i,driver in enumerate(results)})
         rows.append(row)
     pd.DataFrame(rows).to_csv("results.csv", index=False)
-
-def save_season_totals_csv():
-    rows = []
-    for player, total in st.session_state.season_totals.items():
-        rows.append({"Player": player, "Points": total})
-    pd.DataFrame(rows).to_csv("season_totals.csv", index=False)
 
 def save_race_scores_csv():
     rows = []
@@ -161,143 +145,116 @@ def save_race_scores_csv():
         rows.append(row)
     pd.DataFrame(rows).to_csv("race_scores.csv", index=False)
 
+def save_season_totals_csv():
+    rows = [{"Player":player, "Points":pts} for player, pts in st.session_state.season_totals.items()]
+    pd.DataFrame(rows).to_csv("season_totals.csv", index=False)
+
 # -------------------------
 # Streamlit UI
 # -------------------------
 st.title("F1 Race Predictions Tracker")
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["Enter Predictions", "Enter Results", "Results", "Season Leaderboard"]
+    ["Enter Predictions","Enter Results","Race Breakdown","Season Leaderboard"]
 )
 
 # -------------------------
-# Tab 1: Enter Predictions
+# Tab1: Predictions
 # -------------------------
 with tab1:
     st.header("Enter Predictions")
-    race_name = st.selectbox("Select Race", list(RACES.keys()), key="select_race_predictions")
+    race_name = st.selectbox("Select Race", list(RACES.keys()), key="pred_race_select")
 
     for player in PLAYERS:
         st.subheader(player)
         selections = st.session_state.predictions[race_name][player]
-
         for i in range(22):
-            chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-            available_options = [""] + [d for d in DRIVERS if d not in chosen]
-            selections[i] = st.selectbox(
-                f"Position {i+1}",
-                options=available_options,
-                index=available_options.index(selections[i]) if selections[i] in available_options else 0,
-                key=f"pred_{race_name}_{player}_{i}"
-            )
-
+            chosen = set(d for idx,d in enumerate(selections) if d and idx!=i)
+            options = [""] + [d for d in DRIVERS if d not in chosen]
+            selections[i] = st.selectbox(f"P{i+1}", options, index=options.index(selections[i]) if selections[i] in options else 0, key=f"{race_name}_{player}_{i}")
         st.session_state.predictions[race_name][player] = selections
-
-        if st.button(f"Submit {player}'s Predictions", key=f"submit_{race_name}_{player}"):
-            st.success(f"{player}'s predictions submitted!")
-            save_predictions_csv()
+        save_predictions_csv()
 
 # -------------------------
-# Tab 2: Enter Results
+# Tab2: Results
 # -------------------------
 with tab2:
     st.header("Enter Results")
-    race_name_results = st.selectbox("Select Race", list(RACES.keys()), key="select_race_results")
-    selections = st.session_state.results[race_name_results]
-
+    race_name = st.selectbox("Select Race", list(RACES.keys()), key="result_race_select")
+    selections = st.session_state.results[race_name]
     for i in range(22):
-        chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-        available_options = [""] + [d for d in DRIVERS if d not in chosen]
-        selections[i] = st.selectbox(
-            f"Position {i+1}",
-            options=available_options,
-            index=available_options.index(selections[i]) if selections[i] in available_options else 0,
-            key=f"result_{race_name_results}_{i}"
-        )
-
-    st.session_state.results[race_name_results] = selections
+        chosen = set(d for idx,d in enumerate(selections) if d and idx!=i)
+        options = [""] + [d for d in DRIVERS if d not in chosen]
+        selections[i] = st.selectbox(f"P{i+1}", options, index=options.index(selections[i]) if selections[i] in options else 0, key=f"result_{race_name}_{i}")
+    st.session_state.results[race_name] = selections
 
     if st.button("Submit Results"):
-        # remove old points if race already scored
-        if race_name_results in st.session_state.race_scores:
-            old_scores = st.session_state.race_scores[race_name_results]
+        # remove old points if race was scored
+        if race_name in st.session_state.race_scores:
+            old_scores = st.session_state.race_scores[race_name]
             for player, pts in old_scores.items():
                 st.session_state.season_totals[player] -= pts
 
         race_points = {}
         for player in PLAYERS:
-            pred = st.session_state.predictions.get(race_name_results, {}).get(player, [""]*22)
-            points = calculate_scores(pred, selections)
-            race_points[player] = points
-            st.session_state.season_totals[player] += points
+            pred = st.session_state.predictions[race_name].get(player, [""]*22)
+            pts = calculate_scores(pred, selections)
+            race_points[player] = pts
+            st.session_state.season_totals[player] += pts
 
-        st.session_state.race_scores[race_name_results] = race_points
+        st.session_state.race_scores[race_name] = race_points
+        save_results_csv()
+        save_race_scores_csv()
+        save_season_totals_csv()
         st.success("Results submitted successfully!")
 
-        save_results_csv()
-        save_season_totals_csv()
-        save_race_scores_csv()
-
 # -------------------------
-# Tab 3: Results (Race Breakdown)
+# Tab3: Race Breakdown
 # -------------------------
 with tab3:
-    st.header("Race Results & Predictions")
-    race_name_breakdown = st.selectbox(
-        "Select Race", list(RACES.keys()), key="select_race_breakdown"
-    )
-
-    if race_name_breakdown in st.session_state.results:
-        results = st.session_state.results[race_name_breakdown]
-
+    st.header("Race Breakdown")
+    race_name = st.selectbox("Select Race", list(RACES.keys()), key="breakdown_race_select")
+    if race_name in st.session_state.results:
+        results = st.session_state.results[race_name]
         st.subheader("Official Results")
-        df_results = pd.DataFrame({
-            "Position": [f"P{i+1}" for i in range(22)],
-            "Driver": results
-        }).set_index("Position")
+        df_results = pd.DataFrame({"Position":[f"P{i+1}" for i in range(22)], "Driver":results}).set_index("Position")
         st.table(df_results)
 
         st.subheader("Predictions & Points")
-        predictions_data = {}
+        pred_data = {}
         for player in PLAYERS:
-            preds = st.session_state.predictions.get(race_name_breakdown, {}).get(player, [""]*22)
-            points = []
+            preds = st.session_state.predictions[race_name].get(player, [""]*22)
+            pts_list = []
             for i, driver in enumerate(preds):
                 if not driver:
                     pts = 0
                 elif driver == results[i]:
-                    pts = 3 + (3 if i == 0 else 0)
-                elif driver in results[:3] and i < 3:
+                    pts = 3 + (3 if i==0 else 0)
+                elif driver in results[:3] and i<3:
                     pts = 1
                 else:
                     pts = 0
-                points.append(f"{driver} ({pts} pts)" if driver else "")
-            predictions_data[player] = points
-
-        st.table(pd.DataFrame(predictions_data, index=[f"P{i+1}" for i in range(22)]).rename_axis(index=None))
+                pts_list.append(f"{driver} ({pts} pts)" if driver else "")
+            pred_data[player] = pts_list
+        st.table(pd.DataFrame(pred_data, index=[f"P{i+1}" for i in range(22)]).rename_axis(index=None))
     else:
-        st.info("No results for this race yet.")
+        st.info("No results yet.")
 
 # -------------------------
-# Tab 4: Season Leaderboard
+# Tab4: Leaderboard
 # -------------------------
 with tab4:
     st.header("Season Leaderboard")
-    leaderboard = sorted(
-        st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
-    )
-
-    st.dataframe(pd.DataFrame(
-        {player: points for player, points in leaderboard}, index=[0]
-    ).T.rename(columns={0:"Points"}), use_container_width=True)
+    df_leaderboard = pd.DataFrame(list(st.session_state.season_totals.items()), columns=["Player","Points"]).set_index("Player")
+    st.dataframe(df_leaderboard, use_container_width=True)
 
     st.subheader("Points Progression Over Season")
-    races_done = [race for race in RACES.keys() if race in st.session_state.race_scores]
+    races_done = [r for r in RACES if r in st.session_state.race_scores]
     if races_done:
-        progression_data = {player: [] for player in PLAYERS}
-        for race in races_done:
-            for player in PLAYERS:
-                last_points = progression_data[player][-1] if progression_data[player] else 0
-                progression_data[player].append(last_points + st.session_state.race_scores[race].get(player, 0))
-        st.line_chart(pd.DataFrame(progression_data, index=races_done))
+        progression = {p:[] for p in PLAYERS}
+        for r in races_done:
+            for p in PLAYERS:
+                last = progression[p][-1] if progression[p] else 0
+                progression[p].append(last + st.session_state.race_scores[r].get(p,0))
+        st.line_chart(pd.DataFrame(progression, index=races_done))
     else:
-        st.info("No races completed yet to show progression.")
+        st.info("No races completed yet.")
