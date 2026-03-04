@@ -1,0 +1,33 @@
+# -------------------------
+# Default ignored files (existing)
+# -------------------------
+/shelf/
+/workspace.xml
+/queries/
+/dataSources/
+/dataSources.local.xml
+/httpRequests/
+
+# -------------------------
+# Python cache files
+# -------------------------
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# PyCharm project files
+*.iml
+.idea/
+misc.xml
+modules.xml
+vcs.xml
+profiles_settings.xml
+
+# CSVs / runtime data
+predictions.csv
+results.csv
+season_totals.csv
