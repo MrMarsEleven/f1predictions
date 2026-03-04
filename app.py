@@ -15,12 +15,12 @@ DRIVERS = [
 ]
 
 RACES = {
-    "Australian GP | Albert Park Grand Prix Circuit": "Melbourne, Australia",
-    "Chinese GP | Shanghai International Circuit": "Shanghai, China",
-    "Japanese GP | Suzuka International Racing Course": "Suzuka, Japan",
-    "Bahrain GP | Bahrain International Circuit": "Sakhir, Bahrain",
+    "Australian GP | Albert Park": "Melbourne, Australia",
+    "Chinese GP | Shanghai Intl Circuit": "Shanghai, China",
+    "Japanese GP | Suzuka Intl Racing Course": "Suzuka, Japan",
+    "Bahrain GP | Bahrain Intl Circuit": "Sakhir, Bahrain",
     "Saudi Arabian GP | Jeddah Corniche Circuit": "Jeddah, Saudi Arabia",
-    "Miami GP | Miami International Autodrome": "Miami, USA",
+    "Miami GP | Miami Intl Autodrome": "Miami, USA",
     "Canadian GP | Circuit Gilles-Villeneuve": "Montreal, Canada",
     "Monaco GP | Circuit de Monaco": "Monte Carlo, Monaco",
     "Barcelona-Catalunya GP | Circuit de Barcelona-Catalunya": "Montmeló, Spain",
@@ -29,68 +29,89 @@ RACES = {
     "Belgian GP | Circuit de Spa-Francorchamps": "Stavelot, Belgium",
     "Hungarian GP | Hungaroring": "Mogyoród, Hungary",
     "Dutch GP | Circuit Zandvoort": "Zandvoort, Netherlands",
-    "Italian GP | Autodromo Nazionale Monza": "Monza, Italy",
-    "Spanish GP | Madrid Street Circuit (IFEMA)": "Madrid, Spain",
+    "Italian GP | Monza": "Monza, Italy",
+    "Spanish GP | Madrid Street Circuit": "Madrid, Spain",
     "Azerbaijan GP | Baku City Circuit": "Baku, Azerbaijan",
     "Singapore GP | Marina Bay Street Circuit": "Singapore",
     "United States GP | Circuit of the Americas": "Austin, USA",
     "Mexico City GP | Autódromo Hermanos Rodríguez": "Mexico City, Mexico",
-    "São Paulo GP | Autódromo José Carlos Pace (Interlagos)": "São Paulo, Brazil",
+    "São Paulo GP | Interlagos": "São Paulo, Brazil",
     "Las Vegas GP | Las Vegas Strip Circuit": "Las Vegas, USA",
-    "Qatar GP | Lusail International Circuit": "Lusail, Qatar",
+    "Qatar GP | Lusail Intl Circuit": "Lusail, Qatar",
     "Abu Dhabi GP | Yas Marina Circuit": "Abu Dhabi, UAE"
 }
 
 PLAYERS = ["Player 1", "Player 2", "Player 3"]
 
 # -------------------------
+# CSV Loading Helpers
+# -------------------------
+def load_predictions_csv():
+    if os.path.exists("predictions.csv"):
+        df = pd.read_csv("predictions.csv")
+        preds = {}
+        for race in RACES:
+            preds[race] = {}
+            for player in PLAYERS:
+                row = df[(df["Race"] == race) & (df["Player"] == player)]
+                if not row.empty:
+                    preds[race][player] = [row[f"P{i+1}"].values[0] if f"P{i+1}" in row else "" for i in range(22)]
+                else:
+                    preds[race][player] = [""]*22
+        return preds
+    else:
+        return {race: {p: [""]*22 for p in PLAYERS} for race in RACES}
+
+def load_results_csv():
+    if os.path.exists("results.csv"):
+        df = pd.read_csv("results.csv")
+        res = {}
+        for race in RACES:
+            row = df[df["Race"] == race]
+            if not row.empty:
+                res[race] = [row[f"P{i+1}"].values[0] if f"P{i+1}" in row else "" for i in range(22)]
+            else:
+                res[race] = [""]*22
+        return res
+    else:
+        return {race: [""]*22 for race in RACES}
+
+def load_season_totals_csv():
+    if os.path.exists("season_totals.csv"):
+        df = pd.read_csv("season_totals.csv")
+        totals = {row["Player"]: row["Points"] for idx, row in df.iterrows()}
+        for p in PLAYERS:
+            if p not in totals:
+                totals[p] = 0
+        return totals
+    else:
+        return {player: 0 for player in PLAYERS}
+
+def load_race_scores_csv():
+    if os.path.exists("race_scores.csv"):
+        df = pd.read_csv("race_scores.csv")
+        scores = {}
+        for idx, row in df.iterrows():
+            race = row["Race"]
+            scores[race] = {player: row[player] for player in PLAYERS if player in row}
+        return scores
+    else:
+        return {}
+
+# -------------------------
 # Session State Initialization
 # -------------------------
 if 'predictions' not in st.session_state:
-    st.session_state.predictions = {race: {p: [""]*22 for p in PLAYERS} for race in RACES}
+    st.session_state.predictions = load_predictions_csv()
 if 'results' not in st.session_state:
-    st.session_state.results = {race: [""]*22 for race in RACES}
+    st.session_state.results = load_results_csv()
 if 'season_totals' not in st.session_state:
-    st.session_state.season_totals = {player: 0 for player in PLAYERS}
+    st.session_state.season_totals = load_season_totals_csv()
 if 'race_scores' not in st.session_state:
-    st.session_state.race_scores = {}
+    st.session_state.race_scores = load_race_scores_csv()
 
 # -------------------------
-# Load saved CSVs if they exist
-# -------------------------
-if os.path.exists("predictions.csv"):
-    df = pd.read_csv("predictions.csv")
-    for _, row in df.iterrows():
-        race = row["Race"]
-        player = row["Player"]
-        preds = [row[f"P{i+1}"] for i in range(22)]
-        if race not in st.session_state.predictions:
-            st.session_state.predictions[race] = {}
-        st.session_state.predictions[race][player] = preds
-
-if os.path.exists("results.csv"):
-    df = pd.read_csv("results.csv")
-    for _, row in df.iterrows():
-        race = row["Race"]
-        results = [row[f"P{i+1}"] for i in range(22)]
-        st.session_state.results[race] = results
-
-if os.path.exists("race_scores.csv"):
-    df = pd.read_csv("race_scores.csv")
-    for _, row in df.iterrows():
-        race = row["Race"]
-        scores = {player: row[player] for player in PLAYERS}
-        st.session_state.race_scores[race] = scores
-
-# Recalculate season totals
-for player in PLAYERS:
-    st.session_state.season_totals[player] = sum(
-        st.session_state.race_scores[race].get(player, 0)
-        for race in st.session_state.race_scores
-    )
-
-# -------------------------
-# Scoring function
+# Scoring Function
 # -------------------------
 def calculate_scores(predictions, results):
     score = 0
@@ -101,13 +122,13 @@ def calculate_scores(predictions, results):
         if driver == results[i]:
             score += 3
             if i == 0:
-                score += 3  # bonus for exact winner
+                score += 3
         elif driver in podium and i < 3:
             score += 1
     return score
 
 # -------------------------
-# CSV Saving Helpers
+# CSV Saving Functions
 # -------------------------
 def save_predictions_csv():
     rows = []
@@ -145,7 +166,7 @@ def save_race_scores_csv():
 # -------------------------
 st.title("F1 Race Predictions Tracker")
 tab1, tab2, tab3, tab4 = st.tabs(
-    ["Enter Predictions", "Enter Results", "Race Breakdown", "Season Leaderboard"]
+    ["Enter Predictions", "Enter Results", "Results", "Season Leaderboard"]
 )
 
 # -------------------------
@@ -170,7 +191,10 @@ with tab1:
             )
 
         st.session_state.predictions[race_name][player] = selections
-        save_predictions_csv()  # auto-save immediately
+
+        if st.button(f"Submit {player}'s Predictions", key=f"submit_{race_name}_{player}"):
+            st.success(f"{player}'s predictions submitted!")
+            save_predictions_csv()
 
 # -------------------------
 # Tab 2: Enter Results
@@ -193,7 +217,7 @@ with tab2:
     st.session_state.results[race_name_results] = selections
 
     if st.button("Submit Results"):
-        # Remove old points if race already scored
+        # remove old points if race already scored
         if race_name_results in st.session_state.race_scores:
             old_scores = st.session_state.race_scores[race_name_results]
             for player, pts in old_scores.items():
@@ -207,19 +231,17 @@ with tab2:
             st.session_state.season_totals[player] += points
 
         st.session_state.race_scores[race_name_results] = race_points
+        st.success("Results submitted successfully!")
 
-        # Save everything immediately
         save_results_csv()
         save_season_totals_csv()
         save_race_scores_csv()
 
-        st.success("Results submitted successfully!")
-
 # -------------------------
-# Tab 3: Race Breakdown
+# Tab 3: Results (Race Breakdown)
 # -------------------------
 with tab3:
-    st.header("Race Breakdown")
+    st.header("Race Results & Predictions")
     race_name_breakdown = st.selectbox(
         "Select Race", list(RACES.keys()), key="select_race_breakdown"
     )
@@ -263,8 +285,10 @@ with tab4:
     leaderboard = sorted(
         st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
     )
-    df_leaderboard = pd.DataFrame(leaderboard, columns=["Player", "Points"]).set_index("Player")
-    st.dataframe(df_leaderboard, use_container_width=True)
+
+    st.dataframe(pd.DataFrame(
+        {player: points for player, points in leaderboard}, index=[0]
+    ).T.rename(columns={0:"Points"}), use_container_width=True)
 
     st.subheader("Points Progression Over Season")
     races_done = [race for race in RACES.keys() if race in st.session_state.race_scores]
