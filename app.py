@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import plotly.graph_objects as go
 
 # -------------------------
 # Drivers and Races
@@ -42,6 +43,15 @@ RACES = {
     "Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix": ""
 }
 
+SPRINT_RACES = [
+    "Chinese GP | Formula 1 Heineken Chinese Grand Prix",
+    "Miami GP | Formula 1 Crypto.com Miami Grand Prix",
+    "Canadian GP | Formula 1 Lenovo Grand Prix du Canada",
+    "British GP | Formula 1 Pirelli British Grand Prix",
+    "Dutch GP | Formula 1 Heineken Dutch Grand Prix",
+    "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix"
+]
+
 PLAYERS = ["Player 1", "Player 2", "Player 3"]
 
 # -------------------------
@@ -51,11 +61,14 @@ PREDICTIONS_FILE = "predictions.csv"
 RESULTS_FILE = "results.csv"
 SEASON_TOTALS_FILE = "season_totals.csv"
 RACE_SCORES_FILE = "race_scores.csv"
+SPRINT_RESULTS_FILE = "sprint_results.csv"
 
 # -------------------------
 # F1 official points
 # -------------------------
 F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+
+SPRINT_POINTS_SYSTEM = [8, 7, 6, 5, 4, 3, 2, 1]
 
 # -------------------------
 # Helper functions to load CSVs
@@ -106,6 +119,17 @@ def load_race_scores():
     else:
         return {}
 
+def load_sprint_results():
+    if os.path.exists(SPRINT_RESULTS_FILE):
+        df = pd.read_csv(SPRINT_RESULTS_FILE)
+        data = {}
+        for race in df["Race"].unique():
+            row = df[df["Race"] == race].iloc[0]
+            data[race] = [row[f"P{i+1}"] if pd.notna(row[f"P{i+1}"]) else "" for i in range(8)]
+        return data
+    else:
+        return {race: [""]*8 for race in SPRINT_RACES}
+
 # -------------------------
 # Session State Initialization
 # -------------------------
@@ -117,6 +141,8 @@ if 'season_totals' not in st.session_state:
     st.session_state.season_totals = load_season_totals()
 if 'race_scores' not in st.session_state:
     st.session_state.race_scores = load_race_scores()
+if "sprint_results" not in st.session_state:
+    st.session_state.sprint_results = load_sprint_results()
 
 # -------------------------
 # Scoring function
@@ -134,6 +160,16 @@ def calculate_scores(predictions, results):
         elif driver in podium and i < 3:
             score += 1
     return score
+
+def calculate_sprint_points():
+    totals = {driver: 0 for driver in DRIVERS}
+
+    for race, results in st.session_state.sprint_results.items():
+        for pos, driver in enumerate(results):
+            if driver:
+                totals[driver] += SPRINT_POINTS_SYSTEM[pos]
+
+    return totals
 
 # -------------------------
 # CSV Saving Helpers
@@ -169,6 +205,14 @@ def save_race_scores_csv():
         rows.append(row)
     pd.DataFrame(rows).to_csv(RACE_SCORES_FILE, index=False)
 
+def save_sprint_results():
+    rows = []
+    for race, results in st.session_state.sprint_results.items():
+        row = {"Race": race}
+        row.update({f"P{i+1}": driver for i, driver in enumerate(results)})
+        rows.append(row)
+    pd.DataFrame(rows).to_csv(SPRINT_RESULTS_FILE, index=False)
+
 # -------------------------
 # Get championship order
 # -------------------------
@@ -184,8 +228,9 @@ def get_championship_order():
 # Streamlit UI
 # -------------------------
 st.title("F1 Race Predictions Tracker")
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Enter Predictions", "Enter Results", "Race Breakdown", "Season Leaderboard", "Drivers' Championship"]
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+    ["Enter Predictions", "Race Results", "Sprint Results", "Race Breakdown",
+     "Season Leaderboard", "Drivers' Championship"]
 )
 
 # -------------------------
@@ -217,10 +262,10 @@ with tab1:
             save_predictions_csv()
 
 # -------------------------
-# Tab 2: Enter Results
+# Tab 2: Race Results
 # -------------------------
 with tab2:
-    st.header("Enter Results")
+    st.header("Enter Race Results")
     race_name_results = st.selectbox("Select Race", list(RACES.keys()), key="select_race_results")
     selections = st.session_state.results[race_name_results]
 
@@ -258,9 +303,38 @@ with tab2:
         save_race_scores_csv()
 
 # -------------------------
-# Tab 3: Race Breakdown
+# Tab 3: Sprint Results
 # -------------------------
 with tab3:
+    st.header("Enter Sprint Results")
+
+    sprint_race = st.selectbox("Select Sprint Race", SPRINT_RACES)
+
+    selections = st.session_state.sprint_results[sprint_race]
+
+    for i in range(8):
+        chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
+
+        champ_order = get_championship_order()
+        available = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
+
+        selections[i] = st.selectbox(
+            f"Position {i + 1}",
+            options=available,
+            index=available.index(selections[i]) if selections[i] in available else 0,
+            key=f"sprint_{sprint_race}_{i}"
+        )
+
+    st.session_state.sprint_results[sprint_race] = selections
+
+    if st.button("Submit Sprint Results"):
+        save_sprint_results()
+        st.success("Sprint results saved!")
+
+# -------------------------
+# Tab 4: Race Breakdown
+# -------------------------
+with tab4:
     st.header("Race Breakdown")
     race_name_breakdown = st.selectbox(
         "Select Race", list(RACES.keys()), key="select_race_breakdown"
@@ -298,9 +372,9 @@ with tab3:
         st.info("No results for this race yet.")
 
 # -------------------------
-# Tab 4: Season Leaderboard
+# Tab 5: Season Leaderboard
 # -------------------------
-with tab4:
+with tab5:
     st.header("Season Leaderboard")
     leaderboard = sorted(
         st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
@@ -319,44 +393,128 @@ with tab4:
             for player in PLAYERS:
                 last_points = progression_data[player][-1] if progression_data[player] else 0
                 progression_data[player].append(last_points + st.session_state.race_scores[race].get(player, 0))
-        st.line_chart(pd.DataFrame(progression_data, index=races_done))
+        df_progression = pd.DataFrame(progression_data, index=races_done)
+
+        fig = go.Figure()
+
+        for player in df_progression.columns:
+            fig.add_trace(go.Scatter(
+                x=df_progression.index,
+                y=df_progression[player],
+                mode='lines+markers',
+                name=player,
+                hovertemplate="<b>%{fullData.name}</b><br>Points: %{y}<extra></extra>"
+            ))
+
+        fig.update_layout(
+            height=600,
+            legend=dict(
+                orientation="h",
+                y=-0.3
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No races completed yet to show progression.")
 
 # -------------------------
-# Tab 5: Drivers' Championship
+# Tab 6: Drivers' Championship
 # -------------------------
-with tab5:
+with tab6:
     st.header("Drivers' Championship Standings")
 
-    # Initialize totals
+    # Get completed races ONLY
+    races_done = [
+        race for race in RACES.keys()
+        if any(driver != "" for driver in st.session_state.results.get(race, []))
+    ]
+
+    # Base totals (race points only)
     driver_totals = {driver: 0 for driver in DRIVERS}
-    for race, results in st.session_state.results.items():
+
+    for race in races_done:
+        results = st.session_state.results[race]
         for pos, driver in enumerate(results):
-            if driver in driver_totals:
-                driver_totals[driver] += F1_POINTS[pos] if pos < 10 else 0
+            if driver:
+                points = F1_POINTS[pos] if pos < 10 else 0
+                driver_totals[driver] += points
 
+    # ✅ ADD SPRINT POINTS (automatic)
+    sprint_totals = calculate_sprint_points()
+    for driver in DRIVERS:
+        driver_totals[driver] += sprint_totals.get(driver, 0)
+
+    # Sort AFTER sprint applied
+    sorted_drivers = sorted(driver_totals.items(), key=lambda x: x[1], reverse=True)
+
+    # Standings Table
     df_drivers_champ = pd.DataFrame({
-        "Position": [f"P{i+1}" for i in range(len(DRIVERS))],
-        "Driver": list(driver_totals.keys()),
-        "Points": list(driver_totals.values())
-    }).sort_values(by="Points", ascending=False).reset_index(drop=True)
-    st.table(df_drivers_champ.set_index("Position"))
+        "Position": [f"P{i+1}" for i in range(len(sorted_drivers))],
+        "Driver": [d[0] for d in sorted_drivers],
+        "Points": [d[1] for d in sorted_drivers]
+    }).set_index("Position")
 
+    st.table(df_drivers_champ)
+
+    # -------------------------
+    # Progression Chart
+    # -------------------------
     st.subheader("Drivers' Points Progression Over Season")
-    races_done = [race for race in RACES.keys() if race in st.session_state.results]
+
     if races_done:
         progression_data = {driver: [] for driver in DRIVERS}
+
         for race in races_done:
+            results = st.session_state.results[race]
+
             for driver in DRIVERS:
-                last_points = progression_data[driver][-1] if progression_data[driver] else 0
-                results = st.session_state.results[race]
+                prev = progression_data[driver][-1] if progression_data[driver] else 0
+
                 if driver in results:
                     pos = results.index(driver)
-                    points = F1_POINTS[pos] if pos < 10 else 0
+                    gained = F1_POINTS[pos] if pos < 10 else 0
                 else:
-                    points = 0
-                progression_data[driver].append(last_points + points)
-        st.line_chart(pd.DataFrame(progression_data, index=races_done))
+                    gained = 0
+
+                progression_data[driver].append(prev + gained)
+
+        # ✅ ADD SPRINT POINTS AT CORRECT RACES
+        for race in races_done:
+            if race in SPRINT_RACES:
+                sprint_results = st.session_state.sprint_results.get(race, [""]*8)
+                race_index = races_done.index(race)
+
+                for driver in DRIVERS:
+                    if driver in sprint_results:
+                        pos = sprint_results.index(driver)
+                        gained = SPRINT_POINTS_SYSTEM[pos]
+                    else:
+                        gained = 0
+
+                    progression_data[driver][race_index] += gained
+
+        df_progression = pd.DataFrame(progression_data, index=races_done)
+        fig = go.Figure()
+
+        for driver in df_progression.columns:
+            fig.add_trace(go.Scatter(
+                x=df_progression.index,
+                y=df_progression[driver],
+                mode='lines+markers',
+                name=driver,
+                hovertemplate="<b>%{fullData.name}</b><br>Points: %{y}<extra></extra>"
+            ))
+
+        fig.update_layout(
+            height=600,
+            legend=dict(
+                orientation="h",
+                y=-0.3
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
     else:
-        st.info("No races completed yet to show progression.")
+        st.info("No completed races yet.")
