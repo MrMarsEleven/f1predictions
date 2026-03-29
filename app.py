@@ -71,6 +71,53 @@ F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 SPRINT_POINTS_SYSTEM = [8, 7, 6, 5, 4, 3, 2, 1]
 
 # -------------------------
+# Team Colors System (NEW)
+# -------------------------
+DRIVER_TEAMS = {
+    "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
+    "George Russell": "Mercedes", "Kimi Antonelli": "Mercedes",
+    "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
+    "Max Verstappen": "Red Bull", "Isack Hadjar": "Red Bull",
+    "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
+    "Pierre Gasly": "Alpine", "Franco Colapinto": "Alpine",
+    "Esteban Ocon": "Haas", "Oliver Bearman": "Haas",
+    "Carlos Sainz Jr.": "Williams", "Alexander Albon": "Williams",
+    "Liam Lawson": "Racing Bulls", "Arvid Lindblad": "Racing Bulls",
+    "Nico Hülkenberg": "Audi", "Gabriel Bortoleto": "Audi",
+    "Valtteri Bottas": "Kick Sauber", "Sergio Pérez": "Kick Sauber",
+}
+
+TEAM_COLORS = {
+    "McLaren": "#FF8000",
+    "Mercedes": "#00D2BE",
+    "Ferrari": "#DC0000",
+    "Red Bull": "#1E41FF",
+    "Aston Martin": "#006F62",
+    "Alpine": "#0090FF",
+    "Haas": "#B6B6B6",
+    "Williams": "#005AFF",
+    "Racing Bulls": "#2B5FFF",
+    "Audi": "#C00000",
+    "Kick Sauber": "#777777",
+}
+
+def adjust_color(hex_color, factor=1.0):
+    hex_color = hex_color.lstrip('#')
+    rgb = [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+    rgb = [max(0, min(255, int(c * factor))) for c in rgb]
+    return '#%02x%02x%02x' % tuple(rgb)
+
+def get_driver_color(driver):
+    team = DRIVER_TEAMS.get(driver, "Unknown")
+    base = TEAM_COLORS.get(team, "#999999")
+
+    # slight variation between teammates (optional feature)
+    # deterministic using name hash
+    variation = 0.85 if hash(driver) % 2 == 0 else 1.0
+
+    return adjust_color(base, variation)
+
+# -------------------------
 # Helper functions to load CSVs
 # -------------------------
 def load_predictions():
@@ -513,6 +560,7 @@ with tab6:
                 y=df_progression[driver],
                 mode='lines+markers',
                 name=driver,
+                line=dict(color=get_driver_color(driver)),
                 hovertemplate="<b>%{fullData.name}</b><br>Points: %{y}<extra></extra>"
             ))
 
