@@ -430,22 +430,34 @@ with tab6:
         if any(driver != "" for driver in st.session_state.results.get(race, []))
     ]
 
-    # Base totals (race points only)
+    # -------------------------
+    # Championship Totals
+    # -------------------------
     driver_totals = {driver: 0 for driver in DRIVERS}
 
     for race in races_done:
-        results = st.session_state.results[race]
-        for pos, driver in enumerate(results):
-            if driver:
-                points = F1_POINTS[pos] if pos < 10 else 0
-                driver_totals[driver] += points
+        race_results = st.session_state.results[race]
+        sprint_results = st.session_state.sprint_results.get(race, [""]*8)
 
-    # ✅ ADD SPRINT POINTS (automatic)
-    sprint_totals = calculate_sprint_points()
-    for driver in DRIVERS:
-        driver_totals[driver] += sprint_totals.get(driver, 0)
+        for driver in DRIVERS:
 
-    # Sort AFTER sprint applied
+            # Race points
+            if driver in race_results:
+                pos = race_results.index(driver)
+                race_pts = F1_POINTS[pos] if pos < 10 else 0
+            else:
+                race_pts = 0
+
+            # Sprint points
+            if race in SPRINT_RACES and driver in sprint_results:
+                pos = sprint_results.index(driver)
+                sprint_pts = SPRINT_POINTS_SYSTEM[pos]
+            else:
+                sprint_pts = 0
+
+            driver_totals[driver] += race_pts + sprint_pts
+
+    # Sort standings
     sorted_drivers = sorted(driver_totals.items(), key=lambda x: x[1], reverse=True)
 
     # Standings Table
@@ -458,7 +470,7 @@ with tab6:
     st.table(df_drivers_champ)
 
     # -------------------------
-    # Progression Chart
+    # Progression Chart (FIXED)
     # -------------------------
     st.subheader("Drivers' Points Progression Over Season")
 
@@ -466,35 +478,33 @@ with tab6:
         progression_data = {driver: [] for driver in DRIVERS}
 
         for race in races_done:
-            results = st.session_state.results[race]
+            race_results = st.session_state.results[race]
+            sprint_results = st.session_state.sprint_results.get(race, [""]*8)
 
             for driver in DRIVERS:
                 prev = progression_data[driver][-1] if progression_data[driver] else 0
 
-                if driver in results:
-                    pos = results.index(driver)
-                    gained = F1_POINTS[pos] if pos < 10 else 0
+                # Race points
+                if driver in race_results:
+                    pos = race_results.index(driver)
+                    race_pts = F1_POINTS[pos] if pos < 10 else 0
                 else:
-                    gained = 0
+                    race_pts = 0
 
-                progression_data[driver].append(prev + gained)
+                # Sprint points
+                if race in SPRINT_RACES and driver in sprint_results:
+                    pos = sprint_results.index(driver)
+                    sprint_pts = SPRINT_POINTS_SYSTEM[pos]
+                else:
+                    sprint_pts = 0
 
-        # ✅ ADD SPRINT POINTS AT CORRECT RACES
-        for race in races_done:
-            if race in SPRINT_RACES:
-                sprint_results = st.session_state.sprint_results.get(race, [""]*8)
-                race_index = races_done.index(race)
+                total_gain = race_pts + sprint_pts
 
-                for driver in DRIVERS:
-                    if driver in sprint_results:
-                        pos = sprint_results.index(driver)
-                        gained = SPRINT_POINTS_SYSTEM[pos]
-                    else:
-                        gained = 0
-
-                    progression_data[driver][race_index] += gained
+                progression_data[driver].append(prev + total_gain)
 
         df_progression = pd.DataFrame(progression_data, index=races_done)
+
+        # Plotly graph
         fig = go.Figure()
 
         for driver in df_progression.columns:
