@@ -52,7 +52,7 @@ SPRINT_RACES = [
     "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix"
 ]
 
-PLAYERS = ["Player 1", "Player 2"]
+PLAYERS = ["Player 1", "Player 2", "Player 3"]
 
 # -------------------------
 # CSV Filenames
@@ -62,6 +62,7 @@ RESULTS_FILE = "results.csv"
 SEASON_TOTALS_FILE = "season_totals.csv"
 RACE_SCORES_FILE = "race_scores.csv"
 SPRINT_RESULTS_FILE = "sprint_results.csv"
+MANUAL_POINTS_FILE = "manual_points.csv"
 
 # -------------------------
 # F1 official points
@@ -161,7 +162,10 @@ def load_race_scores():
         data = {}
         for race in df["Race"].unique():
             row = df[df["Race"] == race].iloc[0]
-            data[race] = {player: row[player] for player in PLAYERS}
+            data[race] = {
+                player: row[player] if player in row else 0
+                for player in PLAYERS
+            }
         return data
     else:
         return {}
@@ -177,6 +181,25 @@ def load_sprint_results():
     else:
         return {race: [""]*8 for race in SPRINT_RACES}
 
+def load_manual_points():
+    if os.path.exists(MANUAL_POINTS_FILE):
+        df = pd.read_csv(MANUAL_POINTS_FILE)
+        totals = {player: 0 for player in PLAYERS}
+
+        for _, row in df.iterrows():
+            totals[row["Player"]] = row["Points"]
+
+        return totals
+    else:
+        return {player: 0 for player in PLAYERS}
+
+def save_manual_points():
+    rows = [
+        {"Player": player, "Points": points}
+        for player, points in st.session_state.manual_points.items()
+    ]
+    pd.DataFrame(rows).to_csv(MANUAL_POINTS_FILE, index=False)
+
 # -------------------------
 # Session State Initialization
 # -------------------------
@@ -190,6 +213,8 @@ if 'race_scores' not in st.session_state:
     st.session_state.race_scores = load_race_scores()
 if "sprint_results" not in st.session_state:
     st.session_state.sprint_results = load_sprint_results()
+if "manual_points" not in st.session_state:
+    st.session_state.manual_points = load_manual_points()
 
 # -------------------------
 # Scoring function
@@ -275,9 +300,9 @@ def get_championship_order():
 # Streamlit UI
 # -------------------------
 st.title("F1 Race Predictions Tracker")
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
     ["Enter Predictions", "Race Results", "Sprint Results", "Race Breakdown",
-     "Season Leaderboard", "Drivers' Championship"]
+     "Season Leaderboard", "Drivers' Championship", "Manual Bonus Points"]
 )
 
 # -------------------------
@@ -423,8 +448,16 @@ with tab4:
 # -------------------------
 with tab5:
     st.header("Season Leaderboard")
+    leaderboard_totals = {
+        player: st.session_state.season_totals.get(player, 0)
+                + st.session_state.manual_points.get(player, 0)
+        for player in PLAYERS
+    }
+
     leaderboard = sorted(
-        st.session_state.season_totals.items(), key=lambda x: x[1], reverse=True
+        leaderboard_totals.items(),
+        key=lambda x: x[1],
+        reverse=True
     )
     df_leaderboard = pd.DataFrame({
         "Player": [player for player, _ in leaderboard],
@@ -441,7 +474,11 @@ with tab5:
                 last_points = progression_data[player][-1] if progression_data[player] else 0
                 progression_data[player].append(last_points + st.session_state.race_scores[race].get(player, 0))
         df_progression = pd.DataFrame(progression_data, index=races_done)
+        for player in PLAYERS:
+            bonus = st.session_state.manual_points.get(player, 0)
 
+            if bonus != 0:
+                df_progression[player] += bonus
         fig = go.Figure()
 
         for player in df_progression.columns:
@@ -576,3 +613,40 @@ with tab6:
 
     else:
         st.info("No completed races yet.")
+
+# -------------------------
+# Tab 7: Manual Bonus Points
+# -------------------------
+with tab7:
+    st.header("Manual Bonus Points")
+
+    player = st.selectbox(
+        "Select Player",
+        PLAYERS,
+        key="manual_bonus_player"
+    )
+
+    bonus = st.number_input(
+        "Points to Add",
+        min_value=-1000,
+        max_value=1000,
+        value=0,
+        step=1
+    )
+
+    if st.button("Apply Bonus Points"):
+        st.session_state.manual_points[player] += bonus
+        save_manual_points()
+        st.success(f"{bonus} points applied to {player}")
+
+    st.subheader("Current Manual Points")
+
+    manual_df = pd.DataFrame({
+        "Player": PLAYERS,
+        "Manual Points": [
+            st.session_state.manual_points.get(p, 0)
+            for p in PLAYERS
+        ]
+    })
+
+    st.table(manual_df.set_index("Player"))
