@@ -1,49 +1,73 @@
 Race,Player,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22
 Australian GP | Formula 1 Qatar Airways Australian Grand Prix,Player 1,Charles Leclerc,Max Verstappen,George Russell,Lewis Hamilton,Oscar Piastri,Kimi Antonelli,Lando Norris,Isack Hadjar,Pierre Gasly,Carlos Sainz Jr.,Oliver Bearman,Esteban Ocon,Alexander Albon,Nico Hülkenberg,Liam Lawson,Gabriel Bortoleto,Franco Colapinto,Arvid Lindblad,Sergio Pérez,Valtteri Bottas,Fernando Alonso,Lance Stroll
 Australian GP | Formula 1 Qatar Airways Australian Grand Prix,Player 2,George Russell,Charles Leclerc,Max Verstappen,Lewis Hamilton,Lando Norris,Oscar Piastri,Kimi Antonelli,Carlos Sainz Jr.,Oliver Bearman,Alexander Albon,Esteban Ocon,Isack Hadjar,Liam Lawson,Nico Hülkenberg,Arvid Lindblad,Pierre Gasly,Franco Colapinto,Gabriel Bortoleto,Fernando Alonso,Sergio Pérez,Valtteri Bottas,Lance Stroll
+Australian GP | Formula 1 Qatar Airways Australian Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Chinese GP | Formula 1 Heineken Chinese Grand Prix,Player 1,George Russell,Charles Leclerc,Lewis Hamilton,Kimi Antonelli,Lando Norris,Isack Hadjar,Oscar Piastri,Max Verstappen,Oliver Bearman,Gabriel Bortoleto,Esteban Ocon,Pierre Gasly,Nico Hülkenberg,Alexander Albon,Arvid Lindblad,Franco Colapinto,Liam Lawson,Carlos Sainz Jr.,Valtteri Bottas,Sergio Pérez,Fernando Alonso,Lance Stroll
 Chinese GP | Formula 1 Heineken Chinese Grand Prix,Player 2,George Russell,Charles Leclerc,Lewis Hamilton,Lando Norris,Max Verstappen,Oscar Piastri,Kimi Antonelli,Liam Lawson,Oliver Bearman,Esteban Ocon,Pierre Gasly,Carlos Sainz Jr.,Gabriel Bortoleto,Alexander Albon,Isack Hadjar,Franco Colapinto,Nico Hülkenberg,Sergio Pérez,Arvid Lindblad,Valtteri Bottas,Fernando Alonso,Lance Stroll
+Chinese GP | Formula 1 Heineken Chinese Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Japanese GP | Formula 1 Aramco Japanese Grand Prix,Player 1,Kimi Antonelli,George Russell,Lewis Hamilton,Charles Leclerc,Oscar Piastri,Gabriel Bortoleto,Lando Norris,Pierre Gasly,Arvid Lindblad,Isack Hadjar,Oliver Bearman,Max Verstappen,Nico Hülkenberg,Esteban Ocon,Liam Lawson,Franco Colapinto,Carlos Sainz Jr.,Valtteri Bottas,Sergio Pérez,Alexander Albon,Fernando Alonso,Lance Stroll
 Japanese GP | Formula 1 Aramco Japanese Grand Prix,Player 2,George Russell,Kimi Antonelli,Charles Leclerc,Lewis Hamilton,Oscar Piastri,Lando Norris,Oliver Bearman,Pierre Gasly,Esteban Ocon,Franco Colapinto,Isack Hadjar,Max Verstappen,Liam Lawson,Arvid Lindblad,Nico Hülkenberg,Gabriel Bortoleto,Carlos Sainz Jr.,Alexander Albon,Valtteri Bottas,Sergio Pérez,Fernando Alonso,Lance Stroll
+Japanese GP | Formula 1 Aramco Japanese Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Bahrain GP | Formula 1 Gulf Air Bahrain Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Bahrain GP | Formula 1 Gulf Air Bahrain Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Bahrain GP | Formula 1 Gulf Air Bahrain Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Saudi Arabian GP | Formula 1 STC Saudi Arabian Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Saudi Arabian GP | Formula 1 STC Saudi Arabian Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Saudi Arabian GP | Formula 1 STC Saudi Arabian Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Miami GP | Formula 1 Crypto.com Miami Grand Prix,Player 1,Kimi Antonelli,Lando Norris,Charles Leclerc,George Russell,Oscar Piastri,Lewis Hamilton,Max Verstappen,Franco Colapinto,Isack Hadjar,Oliver Bearman,Pierre Gasly,Liam Lawson,Nico Hülkenberg,Esteban Ocon,Carlos Sainz Jr.,Alexander Albon,Arvid Lindblad,Gabriel Bortoleto,Fernando Alonso,Valtteri Bottas,Sergio Pérez,Lance Stroll
 Miami GP | Formula 1 Crypto.com Miami Grand Prix,Player 2,Charles Leclerc,Lando Norris,Oscar Piastri,George Russell,Lewis Hamilton,Kimi Antonelli,Max Verstappen,Pierre Gasly,Isack Hadjar,Oliver Bearman,Esteban Ocon,Franco Colapinto,Liam Lawson,Carlos Sainz Jr.,Nico Hülkenberg,Gabriel Bortoleto,Alexander Albon,Arvid Lindblad,Fernando Alonso,Lance Stroll,Sergio Pérez,Valtteri Bottas
+Miami GP | Formula 1 Crypto.com Miami Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Canadian GP | Formula 1 Lenovo Grand Prix du Canada,Player 1,George Russell,Kimi Antonelli,Lando Norris,Lewis Hamilton,Oscar Piastri,Charles Leclerc,Max Verstappen,Arvid Lindblad,Franco Colapinto,Isack Hadjar,Nico Hülkenberg,Liam Lawson,Gabriel Bortoleto,Oliver Bearman,Pierre Gasly,Esteban Ocon,Carlos Sainz Jr.,Alexander Albon,Fernando Alonso,Sergio Pérez,Valtteri Bottas,Lance Stroll
 Canadian GP | Formula 1 Lenovo Grand Prix du Canada,Player 2,George Russell,Lando Norris,Oscar Piastri,Charles Leclerc,Lewis Hamilton,Max Verstappen,Kimi Antonelli,Carlos Sainz Jr.,Pierre Gasly,Esteban Ocon,Franco Colapinto,Arvid Lindblad,Oliver Bearman,Isack Hadjar,Liam Lawson,Alexander Albon,Gabriel Bortoleto,Nico Hülkenberg,Sergio Pérez,Fernando Alonso,Valtteri Bottas,Lance Stroll
-Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,Player 1,,,,,,,,,,,,,,,,,,,,,,
-Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Canadian GP | Formula 1 Lenovo Grand Prix du Canada,Player 3,,,,,,,,,,,,,,,,,,,,,,
+Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,Player 1,Kimi Antonelli,Lewis Hamilton,Charles Leclerc,George Russell,Max Verstappen,Oscar Piastri,Pierre Gasly,Isack Hadjar,Lando Norris,Nico Hülkenberg,Esteban Ocon,Arvid Lindblad,Gabriel Bortoleto,Oliver Bearman,Liam Lawson,Franco Colapinto,Alexander Albon,Carlos Sainz Jr.,Fernando Alonso,Sergio Pérez,Valtteri Bottas,Lance Stroll
+Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,Player 2,Charles Leclerc,Lewis Hamilton,Max Verstappen,Kimi Antonelli,George Russell,Oscar Piastri,Lando Norris,Esteban Ocon,Isack Hadjar,Gabriel Bortoleto,Nico Hülkenberg,Oliver Bearman,Pierre Gasly,Liam Lawson,Carlos Sainz Jr.,Alexander Albon,Franco Colapinto,Arvid Lindblad,Sergio Pérez,Valtteri Bottas,Fernando Alonso,Lance Stroll
+Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,Player 3,Charles Leclerc,Lewis Hamilton,Kimi Antonelli,Max Verstappen,George Russell,Oscar Piastri,Isack Hadjar,Lando Norris,Pierre Gasly,Oliver Bearman,Nico Hülkenberg,Gabriel Bortoleto,Carlos Sainz Jr.,Alexander Albon,Liam Lawson,Franco Colapinto,Arvid Lindblad,Esteban Ocon,Sergio Pérez,Valtteri Bottas,Fernando Alonso,Lance Stroll
 Barcelona GP | Formula 1 MSC Cruises Gran Premio de Barcelona-Catalunya,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Barcelona GP | Formula 1 MSC Cruises Gran Premio de Barcelona-Catalunya,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Barcelona GP | Formula 1 MSC Cruises Gran Premio de Barcelona-Catalunya,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Austrian GP | Formula 1 Lenovo Austrian Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Austrian GP | Formula 1 Lenovo Austrian Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Austrian GP | Formula 1 Lenovo Austrian Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 British GP | Formula 1 Pirelli British Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 British GP | Formula 1 Pirelli British Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+British GP | Formula 1 Pirelli British Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Belgian GP | Formula 1 Rolex Belgian Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Belgian GP | Formula 1 Rolex Belgian Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Belgian GP | Formula 1 Rolex Belgian Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Hungarian GP | Formula 1 AWS Hungarian Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Hungarian GP | Formula 1 AWS Hungarian Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Hungarian GP | Formula 1 AWS Hungarian Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Dutch GP | Formula 1 Heineken Dutch Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Dutch GP | Formula 1 Heineken Dutch Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Dutch GP | Formula 1 Heineken Dutch Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Italian GP | Formula 1 Pirelli Gran Premio d’Italia,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Italian GP | Formula 1 Pirelli Gran Premio d’Italia,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Italian GP | Formula 1 Pirelli Gran Premio d’Italia,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid),Player 1,,,,,,,,,,,,,,,,,,,,,,
 Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid),Player 2,,,,,,,,,,,,,,,,,,,,,,
+Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid),Player 3,,,,,,,,,,,,,,,,,,,,,,
 Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 United States GP | Formula 1 MSC Cruises United States Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 United States GP | Formula 1 MSC Cruises United States Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+United States GP | Formula 1 MSC Cruises United States Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Mexico City GP | Formula 1 Gran Premio de la Ciudad de México,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Mexico City GP | Formula 1 Gran Premio de la Ciudad de México,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Mexico City GP | Formula 1 Gran Premio de la Ciudad de México,Player 3,,,,,,,,,,,,,,,,,,,,,,
 São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo,Player 1,,,,,,,,,,,,,,,,,,,,,,
 São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo,Player 2,,,,,,,,,,,,,,,,,,,,,,
+São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Las Vegas GP | Formula 1 Heineken Las Vegas Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Las Vegas GP | Formula 1 Heineken Las Vegas Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Las Vegas GP | Formula 1 Heineken Las Vegas Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Qatar GP | Formula 1 Qatar Airways Qatar Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Qatar GP | Formula 1 Qatar Airways Qatar Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Qatar GP | Formula 1 Qatar Airways Qatar Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
 Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix,Player 1,,,,,,,,,,,,,,,,,,,,,,
 Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix,Player 2,,,,,,,,,,,,,,,,,,,,,,
+Abu Dhabi GP | Formula 1 Etihad Airways Abu Dhabi Grand Prix,Player 3,,,,,,,,,,,,,,,,,,,,,,
