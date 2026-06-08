@@ -1,6 +1,7 @@
-Race,Player 1,Player 2
-Australian GP | Formula 1 Qatar Airways Australian Grand Prix,5,19
-Chinese GP | Formula 1 Heineken Chinese Grand Prix,4,4
-Japanese GP | Formula 1 Aramco Japanese Grand Prix,12,10
-Miami GP | Formula 1 Crypto.com Miami Grand Prix,15,9
-Canadian GP | Formula 1 Lenovo Grand Prix du Canada,4,6
+Race,Player 1,Player 2,Player 3
+Australian GP | Formula 1 Qatar Airways Australian Grand Prix,5,19,0
+Chinese GP | Formula 1 Heineken Chinese Grand Prix,4,4,0
+Japanese GP | Formula 1 Aramco Japanese Grand Prix,12,10,0
+Miami GP | Formula 1 Crypto.com Miami Grand Prix,15,9,0
+Canadian GP | Formula 1 Lenovo Grand Prix du Canada,4,6,0
+Monaco GP | Formula 1 Louis Vuitton Grand Prix de Monaco,15,3,4
