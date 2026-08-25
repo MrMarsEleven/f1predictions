@@ -12,7 +12,10 @@ DRIVERS = [
     "Carlos Sainz Jr.", "Alexander Albon", "Liam Lawson", "Arvid Lindblad",
     "Fernando Alonso", "Lance Stroll", "Esteban Ocon", "Oliver Bearman",
     "Nico Hülkenberg", "Gabriel Bortoleto", "Pierre Gasly", "Franco Colapinto",
-    "Valtteri Bottas", "Sergio Pérez"
+    "Valtteri Bottas", "Sergio Pérez",
+
+    # Reserve/substitute drivers
+    "Yuki Tsunoda",
 ]
 
 # Format: "Simple Name | Official Name"
@@ -101,6 +104,186 @@ TEAM_COLORS = {
     "Audi": "#C00000",
     "Kick Sauber": "#777777",
 }
+
+# -------------------------
+# Race Driver Substitutions
+# -------------------------
+#
+# These changes ONLY apply to the specified race.
+#
+# Types:
+#   "out"       = driver does not participate
+#   "transfer"  = driver moves to another team for this race
+#   "in"        = reserve driver enters the race
+#
+# Example:
+#
+# Hadjar is out of the Dutch GP.
+# Lawson transfers Racing Bulls -> Red Bull.
+# Tsunoda enters Racing Bulls.
+#
+
+RACE_DRIVER_OVERRIDES = {
+
+    "Dutch GP | Formula 1 Heineken Dutch Grand Prix": [
+
+        {
+            "driver": "Isack Hadjar",
+            "type": "out"
+        },
+
+        {
+            "driver": "Liam Lawson",
+            "type": "transfer",
+            "from_team": "Racing Bulls",
+            "to_team": "Red Bull"
+        },
+
+        {
+            "driver": "Yuki Tsunoda",
+            "type": "in",
+            "team": "Racing Bulls"
+        },
+    ],
+}
+
+# -------------------------
+# Race-Specific Driver System
+# -------------------------
+
+def get_race_drivers(race):
+    """
+    Returns the drivers who are actually competing
+    in this specific race.
+    """
+
+    active_drivers = set(DRIVERS)
+
+    overrides = RACE_DRIVER_OVERRIDES.get(race, [])
+
+    # Remove drivers who are out
+    for change in overrides:
+        if change["type"] == "out":
+            active_drivers.discard(change["driver"])
+
+    # Add reserve/substitute drivers
+    for change in overrides:
+        if change["type"] == "in":
+            active_drivers.add(change["driver"])
+
+    return list(active_drivers)
+
+
+def get_race_driver_teams(race):
+    """
+    Returns the team each driver is driving for
+    during this specific race.
+    """
+
+    teams = DRIVER_TEAMS.copy()
+
+    overrides = RACE_DRIVER_OVERRIDES.get(race, [])
+
+    for change in overrides:
+
+        if change["type"] == "transfer":
+            teams[change["driver"]] = change["to_team"]
+
+        elif change["type"] == "in":
+            teams[change["driver"]] = change["team"]
+
+    return teams
+
+
+def get_championship_totals():
+    """
+    Calculates the actual Drivers' Championship.
+
+    This is completely separate from the prediction
+    leaderboard.
+
+    Any driver who scores F1 points gets those points,
+    including reserve/substitute drivers.
+    """
+
+    driver_totals = {
+        driver: 0
+        for driver in DRIVERS
+    }
+
+    # --------------------------------
+    # Grand Prix points
+    # --------------------------------
+
+    for race, results in st.session_state.results.items():
+
+        for pos, driver in enumerate(results):
+
+            if not driver:
+                continue
+
+            # Safety: allow a driver to score even if
+            # they were added later.
+            if driver not in driver_totals:
+                driver_totals[driver] = 0
+
+            if pos < len(F1_POINTS):
+                driver_totals[driver] += F1_POINTS[pos]
+
+    # --------------------------------
+    # Sprint points
+    # --------------------------------
+
+    for race, results in st.session_state.sprint_results.items():
+
+        for pos, driver in enumerate(results):
+
+            if not driver:
+                continue
+
+            if driver not in driver_totals:
+                driver_totals[driver] = 0
+
+            if pos < len(SPRINT_POINTS_SYSTEM):
+                driver_totals[driver] += SPRINT_POINTS_SYSTEM[pos]
+
+    return driver_totals
+
+
+def get_championship_order():
+    """
+    Returns all drivers ordered by their actual
+    Drivers' Championship points.
+    """
+
+    driver_totals = get_championship_totals()
+
+    return sorted(
+        driver_totals.keys(),
+        key=lambda driver: driver_totals[driver],
+        reverse=True
+    )
+
+
+def get_race_driver_order(race):
+    """
+    Returns ONLY the drivers who are competing in this race,
+    ordered by their current Drivers' Championship position.
+
+    This is what the prediction/result dropdowns should use.
+    """
+
+    active_drivers = get_race_drivers(race)
+
+    championship_order = get_championship_order()
+
+    ordered = [
+        driver
+        for driver in championship_order
+        if driver in active_drivers
+    ]
+
+    return ordered
 
 def adjust_color(hex_color, factor=1.0):
     hex_color = hex_color.lstrip('#')
@@ -289,12 +472,45 @@ def save_sprint_results():
 # Get championship order
 # -------------------------
 def get_championship_order():
-    driver_totals = {driver: 0 for driver in DRIVERS}
+
+    driver_totals = {
+        driver: 0
+        for driver in DRIVERS
+    }
+
+    # Race points
     for race, results in st.session_state.results.items():
+
         for pos, driver in enumerate(results):
-            if driver in driver_totals:
-                driver_totals[driver] += F1_POINTS[pos] if pos < 10 else 0
-    return sorted(DRIVERS, key=lambda d: driver_totals[d], reverse=True)
+
+            if not driver:
+                continue
+
+            if driver not in driver_totals:
+                driver_totals[driver] = 0
+
+            if pos < len(F1_POINTS):
+                driver_totals[driver] += F1_POINTS[pos]
+
+    # Sprint points
+    for race, results in st.session_state.sprint_results.items():
+
+        for pos, driver in enumerate(results):
+
+            if not driver:
+                continue
+
+            if driver not in driver_totals:
+                driver_totals[driver] = 0
+
+            if pos < len(SPRINT_POINTS_SYSTEM):
+                driver_totals[driver] += SPRINT_POINTS_SYSTEM[pos]
+
+    return sorted(
+        driver_totals.keys(),
+        key=lambda driver: driver_totals[driver],
+        reverse=True
+    )
 
 # -------------------------
 # Streamlit UI
@@ -317,13 +533,31 @@ with tab1:
         selections = st.session_state.predictions[race_name][player]
 
         for i in range(22):
-            chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-            champ_order = get_championship_order()
-            available_options = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
+            chosen = set(
+                d
+                for idx, d in enumerate(selections)
+                if d and idx != i
+            )
+
+            # IMPORTANT:
+            # Only drivers actually racing at this GP
+            # are available for predictions.
+            race_order = get_race_driver_order(race_name)
+
+            available_options = [""] + [
+                driver
+                for driver in race_order
+                if driver not in chosen or driver == selections[i]
+            ]
+
             selections[i] = st.selectbox(
-                f"Position {i+1}",
+                f"Position {i + 1}",
                 options=available_options,
-                index=available_options.index(selections[i]) if selections[i] in available_options else 0,
+                index=(
+                    available_options.index(selections[i])
+                    if selections[i] in available_options
+                    else 0
+                ),
                 key=f"pred_{race_name}_{player}_{i}"
             )
 
@@ -342,13 +576,28 @@ with tab2:
     selections = st.session_state.results[race_name_results]
 
     for i in range(22):
-        chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
-        champ_order = get_championship_order()
-        available_options = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
+        chosen = set(
+            d
+            for idx, d in enumerate(selections)
+            if d and idx != i
+        )
+
+        race_order = get_race_driver_order(race_name_results)
+
+        available_options = [""] + [
+            driver
+            for driver in race_order
+            if driver not in chosen or driver == selections[i]
+        ]
+
         selections[i] = st.selectbox(
-            f"Position {i+1}",
+            f"Position {i + 1}",
             options=available_options,
-            index=available_options.index(selections[i]) if selections[i] in available_options else 0,
+            index=(
+                available_options.index(selections[i])
+                if selections[i] in available_options
+                else 0
+            ),
             key=f"result_{race_name_results}_{i}"
         )
 
@@ -385,15 +634,28 @@ with tab3:
     selections = st.session_state.sprint_results[sprint_race]
 
     for i in range(8):
-        chosen = set(d for idx, d in enumerate(selections) if d and idx != i)
+        chosen = set(
+            d
+            for idx, d in enumerate(selections)
+            if d and idx != i
+        )
 
-        champ_order = get_championship_order()
-        available = [""] + [d for d in champ_order if d not in chosen or d == selections[i]]
+        race_order = get_race_driver_order(sprint_race)
+
+        available = [""] + [
+            driver
+            for driver in race_order
+            if driver not in chosen or driver == selections[i]
+        ]
 
         selections[i] = st.selectbox(
             f"Position {i + 1}",
             options=available,
-            index=available.index(selections[i]) if selections[i] in available else 0,
+            index=(
+                available.index(selections[i])
+                if selections[i] in available
+                else 0
+            ),
             key=f"sprint_{sprint_race}_{i}"
         )
 
@@ -511,95 +773,214 @@ with tab6:
     # Get completed races ONLY
     races_done = [
         race for race in RACES.keys()
-        if any(driver != "" for driver in st.session_state.results.get(race, []))
+        if any(
+            driver != ""
+            for driver in st.session_state.results.get(race, [])
+        )
     ]
 
     # -------------------------
     # Championship Totals
     # -------------------------
-    driver_totals = {driver: 0 for driver in DRIVERS}
+    #
+    # IMPORTANT:
+    # This uses ALL drivers who have scored points,
+    # including substitute/reserve drivers.
+    #
+    # It does NOT use the race-specific roster.
+    #
+    # Therefore:
+    # - A driver who is OUT scores 0 for that race
+    # - A substitute can score points
+    # - Those points stay with the substitute
+    # - The substitute's points count toward the
+    #   overall Drivers' Championship
+    #
+
+    driver_totals = {
+        driver: 0
+        for driver in DRIVERS
+    }
+
+    # Make sure any driver appearing in results is included
+    # even if they were added later as a reserve driver.
+    for race in races_done:
+
+        race_results = st.session_state.results.get(
+            race,
+            [""] * 22
+        )
+
+        sprint_results = st.session_state.sprint_results.get(
+            race,
+            [""] * 8
+        )
+
+        for driver in race_results:
+            if driver and driver not in driver_totals:
+                driver_totals[driver] = 0
+
+        for driver in sprint_results:
+            if driver and driver not in driver_totals:
+                driver_totals[driver] = 0
+
+    # -------------------------
+    # Calculate Race + Sprint Points
+    # -------------------------
 
     for race in races_done:
+
         race_results = st.session_state.results[race]
-        sprint_results = st.session_state.sprint_results.get(race, [""]*8)
 
-        for driver in DRIVERS:
+        sprint_results = st.session_state.sprint_results.get(
+            race,
+            [""] * 8
+        )
 
-            # Race points
-            if driver in race_results:
-                pos = race_results.index(driver)
-                race_pts = F1_POINTS[pos] if pos < 10 else 0
-            else:
-                race_pts = 0
+        # Race points
+        for pos, driver in enumerate(race_results):
 
-            # Sprint points
-            if race in SPRINT_RACES and driver in sprint_results:
-                pos = sprint_results.index(driver)
-                sprint_pts = SPRINT_POINTS_SYSTEM[pos]
-            else:
-                sprint_pts = 0
+            if not driver:
+                continue
 
-            driver_totals[driver] += race_pts + sprint_pts
+            if pos < len(F1_POINTS):
+                driver_totals[driver] += F1_POINTS[pos]
 
+        # Sprint points
+        if race in SPRINT_RACES:
+
+            for pos, driver in enumerate(sprint_results):
+
+                if not driver:
+                    continue
+
+                if pos < len(SPRINT_POINTS_SYSTEM):
+                    driver_totals[driver] += SPRINT_POINTS_SYSTEM[pos]
+
+    # -------------------------
     # Sort standings
-    sorted_drivers = sorted(driver_totals.items(), key=lambda x: x[1], reverse=True)
+    # -------------------------
 
+    sorted_drivers = sorted(
+        driver_totals.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    # -------------------------
     # Standings Table
+    # -------------------------
+
     df_drivers_champ = pd.DataFrame({
-        "Position": [f"P{i+1}" for i in range(len(sorted_drivers))],
-        "Driver": [d[0] for d in sorted_drivers],
-        "Points": [d[1] for d in sorted_drivers]
+        "Position": [
+            f"P{i+1}"
+            for i in range(len(sorted_drivers))
+        ],
+        "Driver": [
+            driver
+            for driver, points in sorted_drivers
+        ],
+        "Points": [
+            points
+            for driver, points in sorted_drivers
+        ]
     }).set_index("Position")
 
     st.table(df_drivers_champ)
 
     # -------------------------
-    # Progression Chart (FIXED)
+    # Progression Chart
     # -------------------------
+
     st.subheader("Drivers' Points Progression Over Season")
 
     if races_done:
-        progression_data = {driver: [] for driver in DRIVERS}
+
+        # Every driver who can score championship points
+        progression_data = {
+            driver: []
+            for driver in driver_totals.keys()
+        }
+
+        # Keep track of each driver's championship total
+        running_totals = {
+            driver: 0
+            for driver in driver_totals.keys()
+        }
 
         for race in races_done:
+
             race_results = st.session_state.results[race]
-            sprint_results = st.session_state.sprint_results.get(race, [""]*8)
 
-            for driver in DRIVERS:
-                prev = progression_data[driver][-1] if progression_data[driver] else 0
+            sprint_results = st.session_state.sprint_results.get(
+                race,
+                [""] * 8
+            )
 
-                # Race points
-                if driver in race_results:
-                    pos = race_results.index(driver)
-                    race_pts = F1_POINTS[pos] if pos < 10 else 0
-                else:
-                    race_pts = 0
+            # -------------------------
+            # Race points
+            # -------------------------
 
-                # Sprint points
-                if race in SPRINT_RACES and driver in sprint_results:
-                    pos = sprint_results.index(driver)
-                    sprint_pts = SPRINT_POINTS_SYSTEM[pos]
-                else:
-                    sprint_pts = 0
+            for pos, driver in enumerate(race_results):
 
-                total_gain = race_pts + sprint_pts
+                if not driver:
+                    continue
 
-                progression_data[driver].append(prev + total_gain)
+                if pos < len(F1_POINTS):
+                    running_totals[driver] += F1_POINTS[pos]
 
-        df_progression = pd.DataFrame(progression_data, index=races_done)
+            # -------------------------
+            # Sprint points
+            # -------------------------
 
+            if race in SPRINT_RACES:
+
+                for pos, driver in enumerate(sprint_results):
+
+                    if not driver:
+                        continue
+
+                    if pos < len(SPRINT_POINTS_SYSTEM):
+                        running_totals[driver] += SPRINT_POINTS_SYSTEM[pos]
+
+            # -------------------------
+            # Save current totals
+            # -------------------------
+
+            for driver in progression_data:
+                progression_data[driver].append(
+                    running_totals[driver]
+                )
+
+        df_progression = pd.DataFrame(
+            progression_data,
+            index=races_done
+        )
+
+        # -------------------------
         # Plotly graph
+        # -------------------------
+
         fig = go.Figure()
 
         for driver in df_progression.columns:
-            fig.add_trace(go.Scatter(
-                x=df_progression.index,
-                y=df_progression[driver],
-                mode='lines+markers',
-                name=driver,
-                line=dict(color=get_driver_color(driver)),
-                hovertemplate="<b>%{fullData.name}</b><br>Points: %{y}<extra></extra>"
-            ))
+
+            fig.add_trace(
+                go.Scatter(
+                    x=df_progression.index,
+                    y=df_progression[driver],
+                    mode="lines+markers",
+                    name=driver,
+                    line=dict(
+                        color=get_driver_color(driver)
+                    ),
+                    hovertemplate=(
+                        "<b>%{fullData.name}</b>"
+                        "<br>Points: %{y}"
+                        "<extra></extra>"
+                    )
+                )
+            )
 
         fig.update_layout(
             height=600,
@@ -609,7 +990,10 @@ with tab6:
             )
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
     else:
         st.info("No completed races yet.")
