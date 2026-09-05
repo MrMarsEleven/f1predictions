@@ -55,7 +55,7 @@ SPRINT_RACES = [
     "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix"
 ]
 
-PLAYERS = ["Player 1", "Player 2", "Player 3"]
+PLAYERS = ["Player 1", "Player 2", "Player 3", "Player 4"]
 
 # -------------------------
 # CSV Filenames
