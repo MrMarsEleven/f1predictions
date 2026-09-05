@@ -145,6 +145,27 @@ RACE_DRIVER_OVERRIDES = {
             "team": "Racing Bulls"
         },
     ],
+
+    "Italian GP | Formula 1 Pirelli Gran Premio d’Italia": [
+
+        {
+            "driver": "Isack Hadjar",
+            "type": "out"
+        },
+
+        {
+            "driver": "Liam Lawson",
+            "type": "transfer",
+            "from_team": "Racing Bulls",
+            "to_team": "Red Bull"
+        },
+
+        {
+            "driver": "Yuki Tsunoda",
+            "type": "in",
+            "team": "Racing Bulls"
+        },
+    ],
 }
 
 # -------------------------
