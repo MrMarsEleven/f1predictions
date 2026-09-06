@@ -88,7 +88,8 @@ DRIVER_TEAMS = {
     "Carlos Sainz Jr.": "Williams", "Alexander Albon": "Williams",
     "Liam Lawson": "Racing Bulls", "Arvid Lindblad": "Racing Bulls",
     "Nico Hülkenberg": "Audi", "Gabriel Bortoleto": "Audi",
-    "Valtteri Bottas": "Kick Sauber", "Sergio Pérez": "Kick Sauber",
+    "Valtteri Bottas": "Cadillac", "Sergio Pérez": "Cadillac",
+    "Yuki Tsunoda": "Racing Bulls",
 }
 
 TEAM_COLORS = {
@@ -123,22 +124,19 @@ TEAM_COLORS = {
 # Tsunoda enters Racing Bulls.
 #
 
+RESERVE_DRIVERS = {
+    "Yuki Tsunoda",
+}
+
 RACE_DRIVER_OVERRIDES = {
-
     "Dutch GP | Formula 1 Heineken Dutch Grand Prix": [
-
-        {
-            "driver": "Isack Hadjar",
-            "type": "out"
-        },
-
+        {"driver": "Isack Hadjar", "type": "out"},
         {
             "driver": "Liam Lawson",
             "type": "transfer",
             "from_team": "Racing Bulls",
             "to_team": "Red Bull"
         },
-
         {
             "driver": "Yuki Tsunoda",
             "type": "in",
@@ -147,19 +145,13 @@ RACE_DRIVER_OVERRIDES = {
     ],
 
     "Italian GP | Formula 1 Pirelli Gran Premio d’Italia": [
-
-        {
-            "driver": "Isack Hadjar",
-            "type": "out"
-        },
-
+        {"driver": "Isack Hadjar", "type": "out"},
         {
             "driver": "Liam Lawson",
             "type": "transfer",
             "from_team": "Racing Bulls",
             "to_team": "Red Bull"
         },
-
         {
             "driver": "Yuki Tsunoda",
             "type": "in",
@@ -168,17 +160,11 @@ RACE_DRIVER_OVERRIDES = {
     ],
 }
 
-# -------------------------
-# Race-Specific Driver System
-# -------------------------
 
 def get_race_drivers(race):
-    """
-    Returns the drivers who are actually competing
-    in this specific race.
-    """
-
-    active_drivers = set(DRIVERS)
+    # Start with the normal full-time drivers,
+    # excluding reserve drivers
+    active_drivers = set(DRIVERS) - RESERVE_DRIVERS
 
     overrides = RACE_DRIVER_OVERRIDES.get(race, [])
 
@@ -187,7 +173,7 @@ def get_race_drivers(race):
         if change["type"] == "out":
             active_drivers.discard(change["driver"])
 
-    # Add reserve/substitute drivers
+    # Add substitute drivers
     for change in overrides:
         if change["type"] == "in":
             active_drivers.add(change["driver"])
@@ -215,6 +201,28 @@ def get_race_driver_teams(race):
 
     return teams
 
+def get_driver_color_at_race(driver, race_index, races_done):
+    """
+    Returns the driver's team color based on the most recent
+    race they actually drove in.
+    """
+
+    # Default to their normal team
+    current_team = DRIVER_TEAMS.get(driver, "Unknown")
+
+    # Look through completed races up to this point
+    for race in races_done[:race_index + 1]:
+        overrides = RACE_DRIVER_OVERRIDES.get(race, [])
+
+        # Check whether this driver transferred teams
+        for change in overrides:
+            if change["driver"] == driver:
+                if change["type"] == "transfer":
+                    current_team = change["to_team"]
+                elif change["type"] == "in":
+                    current_team = change["team"]
+
+    return TEAM_COLORS.get(current_team, "#999999")
 
 def get_championship_totals():
     """
@@ -419,6 +427,27 @@ if "sprint_results" not in st.session_state:
     st.session_state.sprint_results = load_sprint_results()
 if "manual_points" not in st.session_state:
     st.session_state.manual_points = load_manual_points()
+
+# -------------------------
+# Make sure all races and players exist
+# -------------------------
+for race in RACES:
+    if race not in st.session_state.predictions:
+        st.session_state.predictions[race] = {}
+
+    for player in PLAYERS:
+        if player not in st.session_state.predictions[race]:
+            st.session_state.predictions[race][player] = [""] * 22
+
+        # Make sure every prediction list has 22 positions
+        if len(st.session_state.predictions[race][player]) < 22:
+            st.session_state.predictions[race][player] += [""] * (
+                22 - len(st.session_state.predictions[race][player])
+            )
+
+for race in RACES:
+    if race not in st.session_state.results:
+        st.session_state.results[race] = [""] * 22
 
 # -------------------------
 # Scoring function
@@ -803,30 +832,13 @@ with tab6:
     # -------------------------
     # Championship Totals
     # -------------------------
-    #
-    # IMPORTANT:
-    # This uses ALL drivers who have scored points,
-    # including substitute/reserve drivers.
-    #
-    # It does NOT use the race-specific roster.
-    #
-    # Therefore:
-    # - A driver who is OUT scores 0 for that race
-    # - A substitute can score points
-    # - Those points stay with the substitute
-    # - The substitute's points count toward the
-    #   overall Drivers' Championship
-    #
-
     driver_totals = {
         driver: 0
         for driver in DRIVERS
     }
 
     # Make sure any driver appearing in results is included
-    # even if they were added later as a reserve driver.
     for race in races_done:
-
         race_results = st.session_state.results.get(
             race,
             [""] * 22
@@ -848,7 +860,6 @@ with tab6:
     # -------------------------
     # Calculate Race + Sprint Points
     # -------------------------
-
     for race in races_done:
 
         race_results = st.session_state.results[race]
@@ -881,7 +892,6 @@ with tab6:
     # -------------------------
     # Sort standings
     # -------------------------
-
     sorted_drivers = sorted(
         driver_totals.items(),
         key=lambda x: x[1],
@@ -891,7 +901,6 @@ with tab6:
     # -------------------------
     # Standings Table
     # -------------------------
-
     df_drivers_champ = pd.DataFrame({
         "Position": [
             f"P{i+1}"
@@ -912,24 +921,63 @@ with tab6:
     # -------------------------
     # Progression Chart
     # -------------------------
-
     st.subheader("Drivers' Points Progression Over Season")
 
     if races_done:
 
-        # Every driver who can score championship points
-        progression_data = {
-            driver: []
-            for driver in driver_totals.keys()
-        }
-
-        # Keep track of each driver's championship total
+        # ---------------------------------
+        # Running championship totals
+        # ---------------------------------
         running_totals = {
             driver: 0
             for driver in driver_totals.keys()
         }
 
+        # ---------------------------------
+        # Work out each driver's team
+        # at every completed race
+        # ---------------------------------
+        driver_team_history = {
+            driver: []
+            for driver in driver_totals.keys()
+        }
+
+        # Start with their normal team
+        current_teams = {
+            driver: DRIVER_TEAMS.get(driver, "Unknown")
+            for driver in driver_totals.keys()
+        }
+
         for race in races_done:
+
+            overrides = RACE_DRIVER_OVERRIDES.get(race, [])
+
+            # Apply transfers/substitutions for this race
+            for change in overrides:
+
+                driver = change["driver"]
+
+                if change["type"] == "transfer":
+                    current_teams[driver] = change["to_team"]
+
+                elif change["type"] == "in":
+                    current_teams[driver] = change["team"]
+
+            # Save each driver's team for this race
+            for driver in driver_team_history:
+                driver_team_history[driver].append(
+                    current_teams.get(driver, "Unknown")
+                )
+
+        # ---------------------------------
+        # Calculate progression
+        # ---------------------------------
+        progression_data = {
+            driver: []
+            for driver in driver_totals.keys()
+        }
+
+        for race_index, race in enumerate(races_done):
 
             race_results = st.session_state.results[race]
 
@@ -938,10 +986,7 @@ with tab6:
                 [""] * 8
             )
 
-            # -------------------------
             # Race points
-            # -------------------------
-
             for pos, driver in enumerate(race_results):
 
                 if not driver:
@@ -950,10 +995,7 @@ with tab6:
                 if pos < len(F1_POINTS):
                     running_totals[driver] += F1_POINTS[pos]
 
-            # -------------------------
             # Sprint points
-            # -------------------------
-
             if race in SPRINT_RACES:
 
                 for pos, driver in enumerate(sprint_results):
@@ -964,10 +1006,7 @@ with tab6:
                     if pos < len(SPRINT_POINTS_SYSTEM):
                         running_totals[driver] += SPRINT_POINTS_SYSTEM[pos]
 
-            # -------------------------
-            # Save current totals
-            # -------------------------
-
+            # Save current total
             for driver in progression_data:
                 progression_data[driver].append(
                     running_totals[driver]
@@ -978,31 +1017,81 @@ with tab6:
             index=races_done
         )
 
-        # -------------------------
+        # ---------------------------------
         # Plotly graph
-        # -------------------------
-
+        # ---------------------------------
         fig = go.Figure()
 
+        # Add each driver's graph as colored segments
         for driver in df_progression.columns:
 
-            fig.add_trace(
-                go.Scatter(
-                    x=df_progression.index,
-                    y=df_progression[driver],
-                    mode="lines+markers",
-                    name=driver,
-                    line=dict(
-                        color=get_driver_color(driver)
-                    ),
-                    hovertemplate=(
-                        "<b>%{fullData.name}</b>"
-                        "<br>Points: %{y}"
-                        "<extra></extra>"
-                    )
-                )
-            )
+            points = df_progression[driver].tolist()
+            teams = driver_team_history[driver]
 
+            if not points:
+                continue
+
+            # ---------------------------------
+            # Split line whenever team changes
+            # ---------------------------------
+            segment_start = 0
+
+            for i in range(1, len(points) + 1):
+
+                # End of graph OR team changes after this race
+                team_changed = (
+                    i < len(points)
+                    and teams[i] != teams[i - 1]
+                )
+
+                if i == len(points) or team_changed:
+
+                    segment_end = i
+
+                    # Include the next point as well when
+                    # a team changes so the lines connect
+                    if team_changed:
+                        segment_end = i + 1
+
+                    segment_x = races_done[
+                        segment_start:segment_end
+                    ]
+
+                    segment_y = points[
+                        segment_start:segment_end
+                    ]
+
+                    team = teams[segment_start]
+
+                    team_color = TEAM_COLORS.get(
+                        team,
+                        "#999999"
+                    )
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=segment_x,
+                            y=segment_y,
+                            mode="lines+markers",
+                            name=driver,
+                            legendgroup=driver,
+                            showlegend=(segment_start == 0),
+                            line=dict(
+                                color=team_color
+                            ),
+                            hovertemplate=(
+                                "<b>%{fullData.name}</b>"
+                                "<br>Points: %{y}"
+                                "<extra></extra>"
+                            )
+                        )
+                    )
+
+                    segment_start = i
+
+        # ---------------------------------
+        # Graph layout
+        # ---------------------------------
         fig.update_layout(
             height=600,
             legend=dict(
