@@ -429,6 +429,46 @@ if "manual_points" not in st.session_state:
     st.session_state.manual_points = load_manual_points()
 
 # -------------------------
+# Migrate old session data
+# -------------------------
+
+# Make sure every player exists in season_totals
+for player in PLAYERS:
+    if player not in st.session_state.season_totals:
+        st.session_state.season_totals[player] = 0
+
+# Make sure every race has every player
+for race in RACES:
+    if race not in st.session_state.predictions:
+        st.session_state.predictions[race] = {}
+
+    for player in PLAYERS:
+        if player not in st.session_state.predictions[race]:
+            st.session_state.predictions[race][player] = [""] * 22
+        else:
+            # Expand old predictions if they have fewer than 22 drivers
+            current = st.session_state.predictions[race][player]
+
+            if len(current) < 22:
+                st.session_state.predictions[race][player] = (
+                    current + [""] * (22 - len(current))
+                )
+
+# Make sure every race has a results list
+for race in RACES:
+    if race not in st.session_state.results:
+        st.session_state.results[race] = [""] * 22
+
+# Make sure race_scores contains every player for every race
+for race in RACES:
+    if race not in st.session_state.race_scores:
+        st.session_state.race_scores[race] = {}
+
+    for player in PLAYERS:
+        if player not in st.session_state.race_scores[race]:
+            st.session_state.race_scores[race][player] = 0
+
+# -------------------------
 # Make sure all races and players exist
 # -------------------------
 for race in RACES:
@@ -657,6 +697,7 @@ with tab2:
         if race_name_results in st.session_state.race_scores:
             old_scores = st.session_state.race_scores[race_name_results]
             for player, pts in old_scores.items():
+                st.session_state.season_totals.setdefault(player, 0)
                 st.session_state.season_totals[player] -= pts
 
         race_points = {}
