@@ -819,7 +819,13 @@ with tab5:
     st.dataframe(df_leaderboard.set_index("Player"), use_container_width=True)
 
     st.subheader("Points Progression Over Season")
-    races_done = [race for race in RACES.keys() if race in st.session_state.race_scores]
+    races_done = [
+        race for race in RACES.keys()
+        if any(
+            driver != ""
+            for driver in st.session_state.results.get(race, [])
+        )
+    ]
     if races_done:
         progression_data = {player: [] for player in PLAYERS}
         for race in races_done:
