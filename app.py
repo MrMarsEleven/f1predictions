@@ -158,6 +158,21 @@ RACE_DRIVER_OVERRIDES = {
             "team": "Racing Bulls"
         },
     ],
+
+    "Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid)": [
+        {"driver": "Isack Hadjar", "type": "out"},
+        {
+            "driver": "Liam Lawson",
+            "type": "transfer",
+            "from_team": "Racing Bulls",
+            "to_team": "Red Bull"
+        },
+        {
+            "driver": "Yuki Tsunoda",
+            "type": "in",
+            "team": "Racing Bulls"
+        },
+    ],
 }
 
 
