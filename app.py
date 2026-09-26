@@ -37,6 +37,7 @@ RACES = {
     "Italian GP | Formula 1 Pirelli Gran Premio d’Italia": "",
     "Spanish GP | Formula 1 TAG Heuer Spanish Grand Prix (Madrid)": "",
     "Azerbaijan GP | Formula 1 Qatar Airways Azerbaijan Grand Prix": "",
+    "Bahrain GP | Formula 1 Guld Air Bahrain Grand Prix in Malaysia": "",
     "Singapore GP | Formula 1 Singapore Airlines Singapore Grand Prix": "",
     "United States GP | Formula 1 MSC Cruises United States Grand Prix": "",
     "Mexico City GP | Formula 1 Gran Premio de la Ciudad de México": "",
