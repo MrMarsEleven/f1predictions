@@ -15,7 +15,7 @@ DRIVERS = [
     "Valtteri Bottas", "Sergio Pérez",
 
     # Reserve/substitute drivers
-    "Yuki Tsunoda",
+    "Yuki Tsunoda", "Ryo Hirakawa"
 ]
 
 # Format: "Simple Name | Official Name"
@@ -172,6 +172,15 @@ RACE_DRIVER_OVERRIDES = {
             "driver": "Yuki Tsunoda",
             "type": "in",
             "team": "Racing Bulls"
+        },
+    ],
+
+    "Mexico City GP | Formula 1 Gran Premio de la Ciudad de México": [
+        {"driver": "Esteban Ocon", "type": "out"},
+        {
+            "driver": "Ryo Hirakawa",
+            "type": "in",
+            "team": "Haas"
         },
     ],
 }
