@@ -15,7 +15,7 @@ DRIVERS = [
     "Valtteri Bottas", "Sergio Pérez",
 
     # Reserve/substitute drivers
-    "Yuki Tsunoda", "Ryo Hirakawa"
+    "Yuki Tsunoda", "Ryo Hirakawa", "Rafael Câmara"
 ]
 
 # Format: "Simple Name | Official Name"
@@ -179,6 +179,15 @@ RACE_DRIVER_OVERRIDES = {
         {"driver": "Esteban Ocon", "type": "out"},
         {
             "driver": "Ryo Hirakawa",
+            "type": "in",
+            "team": "Haas"
+        },
+    ],
+
+    "São Paulo GP | Formula 1 MSC Cruises Grande Prêmio de São Paulo": [
+        {"driver": "Esteban Ocon", "type": "out"},
+        {
+            "driver": "Rafael Câmara",
             "type": "in",
             "team": "Haas"
         },
